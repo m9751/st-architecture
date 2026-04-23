@@ -1,0 +1,1448 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SmokinTerritory — Architecture Reference</title>
+<style>
+  :root {
+    --bg: #0A1628;
+    --surface: #0F1E35;
+    --surface2: #162440;
+    --border: #1E3A5F;
+    --text: #E2E8F0;
+    --muted: #94A3B8;
+    --blue: #00A1DF;
+    --green: #10B981;
+    --orange: #F59E0B;
+    --red: #EF4444;
+    --purple: #8B5CF6;
+    --navy-dark: #032D60;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+    font-size: 15px;
+    line-height: 1.6;
+  }
+
+  nav {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 220px;
+    height: 100vh;
+    background: var(--surface);
+    border-right: 1px solid var(--border);
+    padding: 24px 16px;
+    overflow-y: auto;
+    z-index: 100;
+  }
+
+  nav .logo {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--blue);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    margin-bottom: 24px;
+    display: block;
+  }
+
+  nav ul { list-style: none; }
+  nav ul li { margin-bottom: 4px; }
+  nav ul li a {
+    display: block;
+    padding: 6px 10px;
+    color: var(--muted);
+    text-decoration: none;
+    font-size: 13px;
+    border-radius: 6px;
+    transition: all 0.15s;
+  }
+  nav ul li a:hover { color: var(--text); background: var(--surface2); }
+  nav ul li a.active { color: var(--blue); background: var(--surface2); }
+
+  nav .nav-section {
+    font-size: 10px;
+    font-weight: 700;
+    color: var(--muted);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    padding: 16px 10px 4px;
+  }
+
+  main {
+    margin-left: 220px;
+    padding: 40px 48px;
+    max-width: 1200px;
+  }
+
+  .header {
+    padding-bottom: 32px;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 48px;
+  }
+
+  .header h1 {
+    font-size: 32px;
+    font-weight: 700;
+    color: var(--text);
+    margin-bottom: 8px;
+  }
+
+  .header .meta {
+    color: var(--muted);
+    font-size: 13px;
+  }
+
+  .header .badge {
+    display: inline-block;
+    background: var(--surface2);
+    color: var(--blue);
+    font-size: 11px;
+    font-weight: 600;
+    padding: 3px 10px;
+    border-radius: 100px;
+    border: 1px solid var(--border);
+    margin-right: 8px;
+  }
+
+  section {
+    margin-bottom: 64px;
+    scroll-margin-top: 32px;
+  }
+
+  section h2 {
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--text);
+    margin-bottom: 6px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  section h2 .num {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    background: var(--blue);
+    color: #fff;
+    font-size: 13px;
+    font-weight: 700;
+    border-radius: 6px;
+    flex-shrink: 0;
+  }
+
+  section h3 {
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--text);
+    margin: 24px 0 12px;
+  }
+
+  p { color: var(--muted); margin-bottom: 12px; }
+  p strong { color: var(--text); }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+    margin: 16px 0;
+  }
+
+  thead tr {
+    background: var(--surface2);
+    border-bottom: 2px solid var(--border);
+  }
+
+  thead th {
+    text-align: left;
+    padding: 10px 14px;
+    color: var(--muted);
+    font-weight: 600;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+  }
+
+  tbody tr {
+    border-bottom: 1px solid var(--border);
+    transition: background 0.1s;
+  }
+
+  tbody tr:hover { background: var(--surface2); }
+
+  tbody td {
+    padding: 10px 14px;
+    color: var(--text);
+    vertical-align: top;
+  }
+
+  tbody td.muted { color: var(--muted); }
+
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 20px 24px;
+    margin-bottom: 16px;
+  }
+
+  .card-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    gap: 16px;
+    margin: 16px 0;
+  }
+
+  .card-sm {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 14px 18px;
+  }
+
+  .card-sm .label {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    margin-bottom: 6px;
+  }
+
+  .card-sm .value {
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--text);
+  }
+
+  .card-sm .sub {
+    font-size: 12px;
+    color: var(--muted);
+    margin-top: 2px;
+  }
+
+  .tag {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: 600;
+    margin-right: 4px;
+    vertical-align: middle;
+  }
+
+  .tag-blue { background: rgba(0,161,223,0.15); color: #38BDF8; border: 1px solid rgba(0,161,223,0.3); }
+  .tag-green { background: rgba(16,185,129,0.15); color: #34D399; border: 1px solid rgba(16,185,129,0.3); }
+  .tag-orange { background: rgba(245,158,11,0.15); color: #FCD34D; border: 1px solid rgba(245,158,11,0.3); }
+  .tag-red { background: rgba(239,68,68,0.15); color: #F87171; border: 1px solid rgba(239,68,68,0.3); }
+  .tag-purple { background: rgba(139,92,246,0.15); color: #A78BFA; border: 1px solid rgba(139,92,246,0.3); }
+  .tag-gray { background: rgba(148,163,184,0.1); color: var(--muted); border: 1px solid var(--border); }
+
+  .alert {
+    border-left: 3px solid var(--orange);
+    background: rgba(245,158,11,0.07);
+    padding: 12px 16px;
+    border-radius: 0 6px 6px 0;
+    margin: 16px 0;
+    font-size: 13px;
+    color: var(--text);
+  }
+
+  .alert.red {
+    border-color: var(--red);
+    background: rgba(239,68,68,0.07);
+  }
+
+  .engine-row {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 16px 20px;
+    margin-bottom: 12px;
+  }
+
+  .engine-row .engine-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 10px;
+  }
+
+  .engine-row .engine-name {
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--text);
+  }
+
+  .engine-row .engine-version {
+    font-size: 11px;
+    color: var(--blue);
+    font-weight: 600;
+    background: rgba(0,161,223,0.1);
+    padding: 2px 8px;
+    border-radius: 4px;
+    border: 1px solid rgba(0,161,223,0.25);
+  }
+
+  .engine-row .engine-fn {
+    font-family: 'SF Mono', 'Fira Code', monospace;
+    font-size: 12px;
+    color: var(--green);
+    background: rgba(16,185,129,0.08);
+    padding: 2px 8px;
+    border-radius: 4px;
+  }
+
+  .col-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: 8px;
+  }
+
+  .col-pill {
+    font-family: 'SF Mono', 'Fira Code', monospace;
+    font-size: 11px;
+    padding: 2px 8px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    color: var(--text);
+  }
+
+  .tier-row {
+    display: flex;
+    gap: 8px;
+    margin-top: 8px;
+  }
+
+  .tier-badge {
+    font-size: 11px;
+    font-weight: 600;
+    padding: 3px 10px;
+    border-radius: 4px;
+  }
+
+  .tier-t1 { background: rgba(0,161,223,0.2); color: #38BDF8; }
+  .tier-t2 { background: rgba(16,185,129,0.2); color: #34D399; }
+  .tier-t3 { background: rgba(245,158,11,0.2); color: #FCD34D; }
+  .tier-t4 { background: rgba(148,163,184,0.1); color: var(--muted); }
+
+  .hook-list, .agent-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 10px;
+    margin: 12px 0;
+  }
+
+  .hook-item {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 10px 14px;
+    font-size: 12px;
+  }
+
+  .hook-item .hook-name {
+    font-family: 'SF Mono', 'Fira Code', monospace;
+    color: var(--orange);
+    font-weight: 600;
+    margin-bottom: 3px;
+    font-size: 12px;
+  }
+
+  .hook-item .hook-desc {
+    color: var(--muted);
+    font-size: 12px;
+  }
+
+  .agent-item {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 12px 16px;
+  }
+
+  .agent-item .agent-name {
+    font-weight: 700;
+    color: var(--text);
+    font-size: 13px;
+    margin-bottom: 4px;
+  }
+
+  .agent-item .agent-model {
+    font-size: 11px;
+    color: var(--blue);
+  }
+
+  .agent-item .agent-desc {
+    font-size: 12px;
+    color: var(--muted);
+    margin-top: 4px;
+  }
+
+  .mcp-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: 8px;
+    margin: 12px 0;
+  }
+
+  .mcp-item {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 10px 12px;
+    font-size: 12px;
+  }
+
+  .mcp-item .mcp-name {
+    font-weight: 600;
+    color: var(--text);
+    margin-bottom: 2px;
+  }
+
+  .mcp-item .mcp-desc {
+    color: var(--muted);
+    font-size: 11px;
+  }
+
+  .isolation-box {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 24px;
+    margin: 20px 0;
+  }
+
+  .project-card {
+    background: var(--surface);
+    border-radius: 10px;
+    padding: 20px 24px;
+  }
+
+  .project-card.st { border: 2px solid var(--blue); }
+  .project-card.wd { border: 2px solid var(--purple); }
+
+  .project-card h3 {
+    margin-top: 0;
+    margin-bottom: 12px;
+    font-size: 16px;
+  }
+
+  .project-card.st h3 { color: var(--blue); }
+  .project-card.wd h3 { color: var(--purple); }
+
+  .boundary-rule {
+    background: rgba(239,68,68,0.07);
+    border: 1px solid rgba(239,68,68,0.3);
+    border-radius: 6px;
+    padding: 12px 16px;
+    margin-top: 20px;
+    font-size: 13px;
+    color: var(--text);
+  }
+
+  .boundary-rule strong { color: var(--red); }
+
+  code {
+    font-family: 'SF Mono', 'Fira Code', monospace;
+    font-size: 12px;
+    background: var(--surface2);
+    padding: 1px 6px;
+    border-radius: 3px;
+    color: var(--green);
+  }
+
+  .svg-wrap {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 24px;
+    margin: 20px 0;
+    overflow-x: auto;
+  }
+
+  svg text { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif; }
+
+  @media print {
+    nav { display: none; }
+    main { margin-left: 0; padding: 20px; }
+    body { background: #fff; color: #000; }
+    .card, .surface, .engine-row { background: #f8f8f8; border-color: #ddd; }
+  }
+</style>
+</head>
+<body>
+
+<nav>
+  <span class="logo">SmokinTerritory</span>
+  <div class="nav-section">Architecture</div>
+  <ul>
+    <li><a href="#overview">1. Overview</a></li>
+    <li><a href="#layer-diagram">2. Layer Diagram</a></li>
+    <li><a href="#data-flow">3. Data Flow</a></li>
+    <li><a href="#tables">4. Table Inventory</a></li>
+    <li><a href="#scoring">5. Scoring Engines</a></li>
+    <li><a href="#ai-infra">6. AI Infrastructure</a></li>
+    <li><a href="#boundaries">7. System Boundaries</a></li>
+  </ul>
+  <div class="nav-section">Quick Ref</div>
+  <ul>
+    <li><a href="#hooks">Hooks (18)</a></li>
+    <li><a href="#agents">Agents (5)</a></li>
+    <li><a href="#mcps">MCP Servers (14+)</a></li>
+  </ul>
+</nav>
+
+<main>
+
+  <div class="header">
+    <h1>SmokinTerritory Architecture Reference</h1>
+    <div class="meta">
+      <span class="badge">INTERNAL</span>
+      <span class="badge">v2026-04-22</span>
+      <span style="color:var(--muted)">Michael Busacca · Enterprise AE, MuleSoft Healthcare · Salesforce</span>
+    </div>
+  </div>
+
+  <!-- ─────────────────────────────────────────── -->
+  <!-- SECTION 1: OVERVIEW                         -->
+  <!-- ─────────────────────────────────────────── -->
+  <section id="overview">
+    <h2><span class="num">1</span> Architecture Overview</h2>
+
+    <p>SmokinTerritory is a territory intelligence platform built to surface the right healthcare accounts at the right time for MuleSoft pipeline generation. It combines a Supabase PostgreSQL data warehouse (865 accounts, 469 unique parent organizations), a Vercel-hosted dashboard, GitHub Actions signal pipelines, and a Claude Code AI layer with 18 enforcement hooks, 5 specialist agents, 73+ skills, and 14+ MCP server connections — all coordinated to reduce pipeline research from hours to minutes.</p>
+
+    <p>The architecture has three layers: a <strong>compute layer</strong> (Vercel for frontend/APIs, GitHub Actions for pipeline orchestration, Railway for persistent services), a <strong>data layer</strong> (Supabase for structured CRM data, Qdrant for vector search, Hindsight for cross-session AI memory), and an <strong>AI infrastructure layer</strong> (Claude Code orchestrating specialized agents via hooks, skills, and MCP tools). A fully isolated second Supabase project (<strong>Whiskey Down</strong>) handles trading/backtesting workloads with a hard zero-cross-join boundary.</p>
+
+    <p>Six scoring engines — TYS v7.4, CHPS v1.1, BHPS v1, PSPS v1.4, RMS v1, and Golden Record v2 — produce tier assignments and composite scores that drive account prioritization, campaign sequencing, and proposal routing.</p>
+
+    <div class="card-grid" style="margin-top: 24px;">
+      <div class="card-sm">
+        <div class="label">Accounts</div>
+        <div class="value">865</div>
+        <div class="sub">469 unique parent orgs (by ultimate_parent_duns)</div>
+      </div>
+      <div class="card-sm">
+        <div class="label">Scoring Engines</div>
+        <div class="value">6</div>
+        <div class="sub">TYS · CHPS · BHPS · PSPS · RMS · Golden Record</div>
+      </div>
+      <div class="card-sm">
+        <div class="label">AI Hooks</div>
+        <div class="value">18</div>
+        <div class="sub">Enforcement gates at PreToolUse / PostToolUse / Session</div>
+      </div>
+      <div class="card-sm">
+        <div class="label">Skills</div>
+        <div class="value">73+</div>
+        <div class="sub">Routed via catalog.json at UserPromptSubmit</div>
+      </div>
+      <div class="card-sm">
+        <div class="label">MCP Servers</div>
+        <div class="value">14+</div>
+        <div class="sub">Supabase, Slack, Apollo, ZoomInfo, MuleSoft, and more</div>
+      </div>
+      <div class="card-sm">
+        <div class="label">Contacts</div>
+        <div class="value">916</div>
+        <div class="sub">Linked to 114 accounts</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ─────────────────────────────────────────── -->
+  <!-- SECTION 2: LAYER DIAGRAM SVG                -->
+  <!-- ─────────────────────────────────────────── -->
+  <section id="layer-diagram">
+    <h2><span class="num">2</span> System Layers</h2>
+    <p>Three-layer architecture: compute services expose data and APIs; the data layer persists and indexes everything; the AI layer orchestrates intelligence on top.</p>
+
+    <div class="svg-wrap">
+      <svg viewBox="0 0 1200 560" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto;display:block;">
+        <defs>
+          <marker id="arrow" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">
+            <polygon points="0 0, 8 3, 0 6" fill="#10B981"/>
+          </marker>
+        </defs>
+
+        <!-- Layer labels -->
+        <text x="20" y="106" fill="#94A3B8" font-size="11" font-weight="700" letter-spacing="1.5" transform="rotate(-90,20,106)" text-anchor="middle">COMPUTE</text>
+        <text x="20" y="296" fill="#94A3B8" font-size="11" font-weight="700" letter-spacing="1.5" transform="rotate(-90,20,296)" text-anchor="middle">DATA</text>
+        <text x="20" y="476" fill="#94A3B8" font-size="11" font-weight="700" letter-spacing="1.5" transform="rotate(-90,20,476)" text-anchor="middle">AI LAYER</text>
+
+        <!-- Layer bands -->
+        <rect x="44" y="20" width="1140" height="172" rx="10" fill="#0F1E35" stroke="#1E3A5F" stroke-width="1"/>
+        <rect x="44" y="210" width="1140" height="172" rx="10" fill="#0F1E35" stroke="#1E3A5F" stroke-width="1"/>
+        <rect x="44" y="400" width="1140" height="140" rx="10" fill="#0F1E35" stroke="#1E3A5F" stroke-width="1"/>
+
+        <!-- COMPUTE LAYER BOXES -->
+        <!-- Vercel -->
+        <rect x="72" y="44" width="200" height="124" rx="8" fill="#162440" stroke="#00A1DF" stroke-width="1.5"/>
+        <text x="172" y="70" fill="#00A1DF" font-size="13" font-weight="700" text-anchor="middle">Vercel</text>
+        <text x="172" y="90" fill="#94A3B8" font-size="11" text-anchor="middle">smokin-territory.vercel.app</text>
+        <text x="172" y="108" fill="#94A3B8" font-size="10" text-anchor="middle">5 serverless API functions</text>
+        <text x="172" y="123" fill="#94A3B8" font-size="10" text-anchor="middle">signals · brief · beacons</text>
+        <text x="172" y="140" fill="#94A3B8" font-size="10" text-anchor="middle">smokin-decision.vercel.app</text>
+        <text x="172" y="155" fill="#94A3B8" font-size="10" text-anchor="middle">cms-api-hub.vercel.app</text>
+
+        <!-- GitHub Actions -->
+        <rect x="302" y="44" width="200" height="124" rx="8" fill="#162440" stroke="#6B7280" stroke-width="1.5"/>
+        <text x="402" y="70" fill="#E2E8F0" font-size="13" font-weight="700" text-anchor="middle">GitHub Actions</text>
+        <text x="402" y="90" fill="#94A3B8" font-size="11" text-anchor="middle">m9751/smokin-territory</text>
+        <text x="402" y="108" fill="#94A3B8" font-size="10" text-anchor="middle">Monthly signal pipeline crons</text>
+        <text x="402" y="123" fill="#94A3B8" font-size="10" text-anchor="middle">Tavily · RSS · Twitter/X</text>
+        <text x="402" y="140" fill="#94A3B8" font-size="10" text-anchor="middle">Substack · Modern Healthcare</text>
+        <text x="402" y="155" fill="#94A3B8" font-size="10" text-anchor="middle">Auto-deploy on push</text>
+
+        <!-- Google Colab -->
+        <rect x="532" y="44" width="200" height="124" rx="8" fill="#162440" stroke="#F59E0B" stroke-width="1.5"/>
+        <text x="632" y="70" fill="#FCD34D" font-size="13" font-weight="700" text-anchor="middle">Google Colab</text>
+        <text x="632" y="90" fill="#94A3B8" font-size="11" text-anchor="middle">Interactive pipeline runner</text>
+        <text x="632" y="108" fill="#94A3B8" font-size="10" text-anchor="middle">SmokinTerritory_Launcher.ipynb</text>
+        <text x="632" y="123" fill="#94A3B8" font-size="10" text-anchor="middle">Manual / on-demand</text>
+        <text x="632" y="140" fill="#94A3B8" font-size="10" text-anchor="middle">Scoring · enrichment</text>
+        <text x="632" y="155" fill="#94A3B8" font-size="10" text-anchor="middle">data transforms</text>
+
+        <!-- Railway -->
+        <rect x="762" y="44" width="200" height="124" rx="8" fill="#162440" stroke="#8B5CF6" stroke-width="1.5"/>
+        <text x="862" y="70" fill="#A78BFA" font-size="13" font-weight="700" text-anchor="middle">Railway</text>
+        <text x="862" y="90" fill="#94A3B8" font-size="11" text-anchor="middle">profound-grace</text>
+        <text x="862" y="108" fill="#94A3B8" font-size="10" text-anchor="middle">Paperclip daemon</text>
+        <text x="862" y="123" fill="#94A3B8" font-size="10" text-anchor="middle">Qdrant vector DB (self-hosted)</text>
+        <text x="862" y="140" fill="#94A3B8" font-size="10" text-anchor="middle">+ Smokin Decision backend</text>
+        <text x="862" y="155" fill="#94A3B8" font-size="10" text-anchor="middle">smokin-decision-production</text>
+
+        <!-- GitHub Pages -->
+        <rect x="992" y="44" width="175" height="124" rx="8" fill="#162440" stroke="#6B7280" stroke-width="1.5"/>
+        <text x="1079" y="70" fill="#E2E8F0" font-size="13" font-weight="700" text-anchor="middle">GitHub Pages</text>
+        <text x="1079" y="90" fill="#94A3B8" font-size="11" text-anchor="middle">m9751.github.io</text>
+        <text x="1079" y="108" fill="#94A3B8" font-size="10" text-anchor="middle">Deployed proposals</text>
+        <text x="1079" y="123" fill="#94A3B8" font-size="10" text-anchor="middle">Cheatsheets · tools</text>
+        <text x="1079" y="140" fill="#94A3B8" font-size="10" text-anchor="middle">Public content only</text>
+        <text x="1079" y="155" fill="#94A3B8" font-size="10" text-anchor="middle">Auto from git push</text>
+
+        <!-- DATA LAYER BOXES -->
+        <!-- Supabase ST -->
+        <rect x="72" y="234" width="240" height="124" rx="8" fill="#162440" stroke="#00A1DF" stroke-width="2"/>
+        <text x="192" y="260" fill="#00A1DF" font-size="13" font-weight="700" text-anchor="middle">Supabase — SmokinTerritory</text>
+        <text x="192" y="278" fill="#94A3B8" font-size="10" text-anchor="middle">cnplogkxbjecdeeritdl · us-west-2</text>
+        <text x="192" y="295" fill="#94A3B8" font-size="10" text-anchor="middle">PostgreSQL · 865 accounts</text>
+        <text x="192" y="311" fill="#94A3B8" font-size="10" text-anchor="middle">scoring · contacts · campaigns</text>
+        <text x="192" y="327" fill="#94A3B8" font-size="10" text-anchor="middle">signal_events · deliverables</text>
+        <text x="192" y="343" fill="#94A3B8" font-size="10" text-anchor="middle">hospital_quality · ehr_data</text>
+
+        <!-- Supabase WD -->
+        <rect x="342" y="234" width="220" height="124" rx="8" fill="#162440" stroke="#8B5CF6" stroke-width="1.5" stroke-dasharray="6,3"/>
+        <text x="452" y="260" fill="#A78BFA" font-size="13" font-weight="700" text-anchor="middle">Supabase — Whiskey Down</text>
+        <text x="452" y="278" fill="#94A3B8" font-size="10" text-anchor="middle">wwmhnjfmrbqemeygygcn · us-west-1</text>
+        <text x="452" y="295" fill="#94A3B8" font-size="10" text-anchor="middle">ISOLATED · WD_ env vars only</text>
+        <text x="452" y="311" fill="#94A3B8" font-size="10" text-anchor="middle">backtests · trades · candidates</text>
+        <text x="452" y="327" fill="#94A3B8" font-size="10" text-anchor="middle">ideas · published_ideas_store</text>
+        <text x="452" y="343" fill="#94A3B8" font-size="10" text-anchor="middle">Zero cross-project SQL joins</text>
+
+        <!-- Qdrant -->
+        <rect x="592" y="234" width="195" height="124" rx="8" fill="#162440" stroke="#10B981" stroke-width="1.5"/>
+        <text x="689" y="260" fill="#34D399" font-size="13" font-weight="700" text-anchor="middle">Qdrant</text>
+        <text x="689" y="278" fill="#94A3B8" font-size="11" text-anchor="middle">Railway · profound-grace</text>
+        <text x="689" y="295" fill="#94A3B8" font-size="10" text-anchor="middle">4 knowledge base collections</text>
+        <text x="689" y="311" fill="#94A3B8" font-size="10" text-anchor="middle">RAG for territory research</text>
+        <text x="689" y="327" fill="#94A3B8" font-size="10" text-anchor="middle">MuleSoft docs · account KB</text>
+        <text x="689" y="343" fill="#94A3B8" font-size="10" text-anchor="middle">Accessed via KB MCP</text>
+
+        <!-- Hindsight -->
+        <rect x="817" y="234" width="195" height="124" rx="8" fill="#162440" stroke="#F59E0B" stroke-width="1.5"/>
+        <text x="914" y="260" fill="#FCD34D" font-size="13" font-weight="700" text-anchor="middle">Hindsight MCP</text>
+        <text x="914" y="278" fill="#94A3B8" font-size="11" text-anchor="middle">Persistent cross-session memory</text>
+        <text x="914" y="295" fill="#94A3B8" font-size="10" text-anchor="middle">retain / recall / reflect</text>
+        <text x="914" y="311" fill="#94A3B8" font-size="10" text-anchor="middle">directives · mental models</text>
+        <text x="914" y="327" fill="#94A3B8" font-size="10" text-anchor="middle">Both ST + WD projects</text>
+        <text x="914" y="343" fill="#94A3B8" font-size="10" text-anchor="middle">Validated 2026-04-20</text>
+
+        <!-- Google Drive -->
+        <rect x="1032" y="234" width="135" height="124" rx="8" fill="#162440" stroke="#6B7280" stroke-width="1.5"/>
+        <text x="1099" y="260" fill="#E2E8F0" font-size="13" font-weight="700" text-anchor="middle">Google Drive</text>
+        <text x="1099" y="278" fill="#94A3B8" font-size="10" text-anchor="middle">Deliverables archive</text>
+        <text x="1099" y="295" fill="#94A3B8" font-size="10" text-anchor="middle">HTML + PDF source</text>
+        <text x="1099" y="311" fill="#94A3B8" font-size="10" text-anchor="middle">Account folders</text>
+        <text x="1099" y="327" fill="#94A3B8" font-size="10" text-anchor="middle">Auto-sync via</text>
+        <text x="1099" y="343" fill="#94A3B8" font-size="10" text-anchor="middle">CloudStorage link</text>
+
+        <!-- AI LAYER BOXES -->
+        <!-- Hooks -->
+        <rect x="72" y="424" width="190" height="100" rx="8" fill="#162440" stroke="#EF4444" stroke-width="1.5"/>
+        <text x="167" y="448" fill="#F87171" font-size="13" font-weight="700" text-anchor="middle">Hooks (18)</text>
+        <text x="167" y="466" fill="#94A3B8" font-size="10" text-anchor="middle">Enforcement gates</text>
+        <text x="167" y="481" fill="#94A3B8" font-size="10" text-anchor="middle">PreToolUse · PostToolUse</text>
+        <text x="167" y="496" fill="#94A3B8" font-size="10" text-anchor="middle">SessionStart · SessionEnd</text>
+        <text x="167" y="511" fill="#94A3B8" font-size="10" text-anchor="middle">plan-gate · no-guess · exchange</text>
+
+        <!-- Agents -->
+        <rect x="282" y="424" width="190" height="100" rx="8" fill="#162440" stroke="#00A1DF" stroke-width="1.5"/>
+        <text x="377" y="448" fill="#38BDF8" font-size="13" font-weight="700" text-anchor="middle">Agents (5)</text>
+        <text x="377" y="466" fill="#94A3B8" font-size="10" text-anchor="middle">territory-data-scientist (Sonnet)</text>
+        <text x="377" y="481" fill="#94A3B8" font-size="10" text-anchor="middle">signal-scout (Haiku)</text>
+        <text x="377" y="496" fill="#94A3B8" font-size="10" text-anchor="middle">campaign-pm (Haiku)</text>
+        <text x="377" y="511" fill="#94A3B8" font-size="10" text-anchor="middle">territory-signal · healthcare-reviewer</text>
+
+        <!-- Skills -->
+        <rect x="492" y="424" width="190" height="100" rx="8" fill="#162440" stroke="#8B5CF6" stroke-width="1.5"/>
+        <text x="587" y="448" fill="#A78BFA" font-size="13" font-weight="700" text-anchor="middle">Skills (73+)</text>
+        <text x="587" y="466" fill="#94A3B8" font-size="10" text-anchor="middle">Routed via catalog.json</text>
+        <text x="587" y="481" fill="#94A3B8" font-size="10" text-anchor="middle">solution-architect · campaign</text>
+        <text x="587" y="496" fill="#94A3B8" font-size="10" text-anchor="middle">scoring · cto-lens · mulesoft</text>
+        <text x="587" y="511" fill="#94A3B8" font-size="10" text-anchor="middle">At UserPromptSubmit</text>
+
+        <!-- MCPs -->
+        <rect x="702" y="424" width="190" height="100" rx="8" fill="#162440" stroke="#10B981" stroke-width="1.5"/>
+        <text x="797" y="448" fill="#34D399" font-size="13" font-weight="700" text-anchor="middle">MCP Servers (14+)</text>
+        <text x="797" y="466" fill="#94A3B8" font-size="10" text-anchor="middle">Supabase ×2 · Slack · Apollo</text>
+        <text x="797" y="481" fill="#94A3B8" font-size="10" text-anchor="middle">ZoomInfo · NPI · CMS Coverage</text>
+        <text x="797" y="496" fill="#94A3B8" font-size="10" text-anchor="middle">MuleSoft · TraderMonty</text>
+        <text x="797" y="511" fill="#94A3B8" font-size="10" text-anchor="middle">Figma · Google Drive · Vercel</text>
+
+        <!-- Memory -->
+        <rect x="912" y="424" width="255" height="100" rx="8" fill="#162440" stroke="#F59E0B" stroke-width="1.5"/>
+        <text x="1039" y="448" fill="#FCD34D" font-size="13" font-weight="700" text-anchor="middle">Memory System</text>
+        <text x="1039" y="466" fill="#94A3B8" font-size="10" text-anchor="middle">~/.claude/projects/ (file-based)</text>
+        <text x="1039" y="481" fill="#94A3B8" font-size="10" text-anchor="middle">MEMORY.md · 200-line auto-load</text>
+        <text x="1039" y="496" fill="#94A3B8" font-size="10" text-anchor="middle">Pipeline-F weekly self-learning</text>
+        <text x="1039" y="511" fill="#94A3B8" font-size="10" text-anchor="middle">Hindsight cross-session recall</text>
+
+        <!-- Arrows: Compute → Data -->
+        <line x1="172" y1="168" x2="192" y2="234" stroke="#10B981" stroke-width="1.5" marker-end="url(#arrow)"/>
+        <line x1="402" y1="168" x2="300" y2="234" stroke="#10B981" stroke-width="1.5" marker-end="url(#arrow)"/>
+        <line x1="632" y1="168" x2="632" y2="234" stroke="#10B981" stroke-width="1.5" marker-end="url(#arrow)"/>
+        <line x1="862" y1="168" x2="750" y2="234" stroke="#10B981" stroke-width="1.5" marker-end="url(#arrow)"/>
+
+        <!-- Arrows: Data → AI -->
+        <line x1="192" y1="358" x2="167" y2="424" stroke="#10B981" stroke-width="1.5" marker-end="url(#arrow)"/>
+        <line x1="192" y1="358" x2="377" y2="424" stroke="#10B981" stroke-width="1.5" marker-end="url(#arrow)"/>
+        <line x1="689" y1="358" x2="587" y2="424" stroke="#10B981" stroke-width="1.5" marker-end="url(#arrow)"/>
+        <line x1="689" y1="358" x2="797" y2="424" stroke="#10B981" stroke-width="1.5" marker-end="url(#arrow)"/>
+        <line x1="914" y1="358" x2="1039" y2="424" stroke="#10B981" stroke-width="1.5" marker-end="url(#arrow)"/>
+      </svg>
+    </div>
+  </section>
+
+  <!-- ─────────────────────────────────────────── -->
+  <!-- SECTION 3: DATA FLOW DIAGRAM                -->
+  <!-- ─────────────────────────────────────────── -->
+  <section id="data-flow">
+    <h2><span class="num">3</span> Data Flow</h2>
+    <p>Territory intelligence flows left-to-right: raw signals collected from external sources → enriched and stored in <code>signal_events</code> → scored and tiered by 6 engines → surfaced through the Brief API and dashboard → routed into campaign outreach.</p>
+
+    <div class="svg-wrap">
+      <svg viewBox="0 0 1200 320" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto;display:block;">
+        <defs>
+          <marker id="arrow2" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">
+            <polygon points="0 0, 8 3, 0 6" fill="#10B981"/>
+          </marker>
+        </defs>
+
+        <!-- SOURCES -->
+        <rect x="20" y="20" width="135" height="280" rx="8" fill="#0F1E35" stroke="#1E3A5F" stroke-width="1"/>
+        <text x="87" y="44" fill="#94A3B8" font-size="11" font-weight="700" text-anchor="middle" letter-spacing="1">SOURCES</text>
+        <rect x="32" y="54" width="111" height="28" rx="5" fill="#162440" stroke="#1E3A5F" stroke-width="1"/>
+        <text x="87" y="73" fill="#E2E8F0" font-size="11" text-anchor="middle">Tavily AI</text>
+        <rect x="32" y="90" width="111" height="28" rx="5" fill="#162440" stroke="#1E3A5F" stroke-width="1"/>
+        <text x="87" y="109" fill="#E2E8F0" font-size="11" text-anchor="middle">Substack</text>
+        <rect x="32" y="126" width="111" height="28" rx="5" fill="#162440" stroke="#1E3A5F" stroke-width="1"/>
+        <text x="87" y="145" fill="#E2E8F0" font-size="11" text-anchor="middle">Medium</text>
+        <rect x="32" y="162" width="111" height="28" rx="5" fill="#162440" stroke="#1E3A5F" stroke-width="1"/>
+        <text x="87" y="181" fill="#E2E8F0" font-size="11" text-anchor="middle">Twitter / X</text>
+        <rect x="32" y="198" width="111" height="28" rx="5" fill="#162440" stroke="#1E3A5F" stroke-width="1"/>
+        <text x="87" y="217" fill="#E2E8F0" font-size="11" text-anchor="middle">News RSS</text>
+        <rect x="32" y="234" width="111" height="28" rx="5" fill="#162440" stroke="#1E3A5F" stroke-width="1"/>
+        <text x="87" y="253" fill="#E2E8F0" font-size="10" text-anchor="middle">Modern Healthcare</text>
+        <rect x="32" y="270" width="111" height="24" rx="5" fill="#162440" stroke="#1E3A5F" stroke-width="1"/>
+        <text x="87" y="287" fill="#E2E8F0" font-size="10" text-anchor="middle">CMS / SAM.gov</text>
+
+        <!-- Arrow: Sources → GHA -->
+        <line x1="155" y1="160" x2="190" y2="160" stroke="#10B981" stroke-width="1.5" marker-end="url(#arrow2)"/>
+
+        <!-- GitHub Actions -->
+        <rect x="190" y="110" width="130" height="100" rx="8" fill="#162440" stroke="#6B7280" stroke-width="1.5"/>
+        <text x="255" y="135" fill="#E2E8F0" font-size="12" font-weight="700" text-anchor="middle">GitHub Actions</text>
+        <text x="255" y="153" fill="#94A3B8" font-size="10" text-anchor="middle">Monthly cron</text>
+        <text x="255" y="168" fill="#94A3B8" font-size="10" text-anchor="middle">signal_triage.py</text>
+        <text x="255" y="183" fill="#94A3B8" font-size="10" text-anchor="middle">signal classification</text>
+        <text x="255" y="198" fill="#94A3B8" font-size="10" text-anchor="middle">+ dedup + routing</text>
+
+        <!-- Arrow: GHA → signal_events -->
+        <line x1="320" y1="160" x2="358" y2="160" stroke="#10B981" stroke-width="1.5" marker-end="url(#arrow2)"/>
+
+        <!-- signal_events -->
+        <rect x="358" y="120" width="140" height="80" rx="8" fill="#162440" stroke="#00A1DF" stroke-width="1.5"/>
+        <text x="428" y="145" fill="#38BDF8" font-size="12" font-weight="700" text-anchor="middle">signal_events</text>
+        <text x="428" y="163" fill="#94A3B8" font-size="10" text-anchor="middle">WARN · M&amp;A · NIH</text>
+        <text x="428" y="178" fill="#94A3B8" font-size="10" text-anchor="middle">scoring shifts · 8-K</text>
+
+        <!-- Arrow: signal_events → Scoring -->
+        <line x1="498" y1="160" x2="536" y2="160" stroke="#10B981" stroke-width="1.5" marker-end="url(#arrow2)"/>
+
+        <!-- Scoring Engines -->
+        <rect x="536" y="60" width="155" height="200" rx="8" fill="#162440" stroke="#F59E0B" stroke-width="1.5"/>
+        <text x="613" y="84" fill="#FCD34D" font-size="12" font-weight="700" text-anchor="middle">Scoring Engines</text>
+        <text x="613" y="102" fill="#94A3B8" font-size="10" text-anchor="middle">TYS v7.4 — territory</text>
+        <text x="613" y="118" fill="#94A3B8" font-size="10" text-anchor="middle">CHPS v1.1 — CMS pain</text>
+        <text x="613" y="134" fill="#94A3B8" font-size="10" text-anchor="middle">BHPS v1 — behavioral health</text>
+        <text x="613" y="150" fill="#94A3B8" font-size="10" text-anchor="middle">PSPS v1.4 — pediatric</text>
+        <text x="613" y="166" fill="#94A3B8" font-size="10" text-anchor="middle">RMS v1 — rural/CAH</text>
+        <text x="613" y="182" fill="#94A3B8" font-size="10" text-anchor="middle">Golden Record v2 — dedup</text>
+        <text x="613" y="202" fill="#94A3B8" font-size="9" text-anchor="middle">Supabase pg functions</text>
+        <text x="613" y="216" fill="#94A3B8" font-size="9" text-anchor="middle">+ Python pipeline</text>
+        <text x="613" y="234" fill="#94A3B8" font-size="9" text-anchor="middle">Colab + GitHub Actions</text>
+
+        <!-- Arrow: Scoring → scoring table -->
+        <line x1="691" y1="160" x2="730" y2="160" stroke="#10B981" stroke-width="1.5" marker-end="url(#arrow2)"/>
+
+        <!-- scoring table -->
+        <rect x="730" y="120" width="135" height="80" rx="8" fill="#162440" stroke="#00A1DF" stroke-width="2"/>
+        <text x="797" y="147" fill="#38BDF8" font-size="12" font-weight="700" text-anchor="middle">scoring table</text>
+        <text x="797" y="163" fill="#94A3B8" font-size="10" text-anchor="middle">tys_tier · cms_peer_score</text>
+        <text x="797" y="178" fill="#94A3B8" font-size="10" text-anchor="middle">bhps · psps · rms cols</text>
+
+        <!-- Arrow: scoring → Brief API -->
+        <line x1="865" y1="160" x2="903" y2="160" stroke="#10B981" stroke-width="1.5" marker-end="url(#arrow2)"/>
+
+        <!-- Brief API -->
+        <rect x="903" y="100" width="135" height="120" rx="8" fill="#162440" stroke="#00A1DF" stroke-width="1.5"/>
+        <text x="970" y="125" fill="#00A1DF" font-size="12" font-weight="700" text-anchor="middle">Brief API</text>
+        <text x="970" y="143" fill="#94A3B8" font-size="10" text-anchor="middle">api/brief.py (Vercel)</text>
+        <text x="970" y="158" fill="#94A3B8" font-size="10" text-anchor="middle">Cron: Mon-Fri 11:00 UTC</text>
+        <text x="970" y="173" fill="#94A3B8" font-size="10" text-anchor="middle">signals.html dashboard</text>
+        <text x="970" y="188" fill="#94A3B8" font-size="10" text-anchor="middle">Territory Intel Map</text>
+        <text x="970" y="203" fill="#94A3B8" font-size="10" text-anchor="middle">Plotly.js v2.27.0</text>
+
+        <!-- Arrow: Brief → Outreach -->
+        <line x1="1038" y1="160" x2="1075" y2="160" stroke="#10B981" stroke-width="1.5" marker-end="url(#arrow2)"/>
+
+        <!-- Outreach -->
+        <rect x="1075" y="100" width="110" height="120" rx="8" fill="#162440" stroke="#10B981" stroke-width="1.5"/>
+        <text x="1130" y="125" fill="#34D399" font-size="12" font-weight="700" text-anchor="middle">Outreach</text>
+        <text x="1130" y="143" fill="#94A3B8" font-size="10" text-anchor="middle">Campaign sequences</text>
+        <text x="1130" y="158" fill="#94A3B8" font-size="10" text-anchor="middle">campaign_events</text>
+        <text x="1130" y="173" fill="#94A3B8" font-size="10" text-anchor="middle">Beacon tracking</text>
+        <text x="1130" y="188" fill="#94A3B8" font-size="10" text-anchor="middle">proposal_engagement</text>
+        <text x="1130" y="203" fill="#94A3B8" font-size="10" text-anchor="middle">account_artifacts</text>
+      </svg>
+    </div>
+  </section>
+
+  <!-- ─────────────────────────────────────────── -->
+  <!-- SECTION 4: TABLE INVENTORY                  -->
+  <!-- ─────────────────────────────────────────── -->
+  <section id="tables">
+    <h2><span class="num">4</span> Table Inventory — SmokinTerritory</h2>
+    <p>All tables in the <code>cnplogkxbjecdeeritdl</code> project (us-west-2). Row counts are approximate; verify with <code>SELECT COUNT(*) FROM &lt;table&gt;</code> before querying large result sets.</p>
+
+    <h3>Core Account Data</h3>
+    <table>
+      <thead>
+        <tr>
+          <th>Table</th>
+          <th>Rows (approx)</th>
+          <th>Key Columns</th>
+          <th>Purpose</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><code>accounts</code></td>
+          <td>865</td>
+          <td>account_id18, account_name, npi_validated, parent_entity_id, ultimate_parent_duns</td>
+          <td>Primary account registry. 469 unique parent orgs by ultimate_parent_duns.</td>
+        </tr>
+        <tr>
+          <td><code>scoring</code></td>
+          <td>865</td>
+          <td>tys_*, cms_peer_*, bhps_*, psps_*, rms_*</td>
+          <td>All 6 engine outputs, one row per account.</td>
+        </tr>
+        <tr>
+          <td><code>contacts</code></td>
+          <td>916</td>
+          <td>contact_id, account_id, first_name, last_name, title, email</td>
+          <td>Contact roster. 114 accounts linked.</td>
+        </tr>
+        <tr>
+          <td><code>account_contacts</code></td>
+          <td>548</td>
+          <td>account_id, contact_id</td>
+          <td>Junction table for account–contact relationship.</td>
+        </tr>
+        <tr>
+          <td><code>ehr_data</code></td>
+          <td>~865</td>
+          <td>account_id, ehr_vendor, ehr_version, attestation_year</td>
+          <td>EHR vendor + attestation. Best EHR angle: Oracle Health/Cerner shops.</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h3>CMS Quality & Clinical Data</h3>
+    <table>
+      <thead>
+        <tr>
+          <th>Table</th>
+          <th>Rows (approx)</th>
+          <th>Key Columns</th>
+          <th>Purpose</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><code>hospital_quality</code></td>
+          <td>~865</td>
+          <td>account_id, hrrp_penalty, hac_reduction, hvbp_score, hcahps_score</td>
+          <td>CMS reimbursement metrics: HRRP, HAC, HVBP, HCAHPS.</td>
+        </tr>
+        <tr>
+          <td><code>hac_measures</code></td>
+          <td>3,055</td>
+          <td>ccn, measure_id, score, payment_reduction</td>
+          <td>HAC detail. 42 accounts linked. 719 rows with payment_reduction=true.</td>
+        </tr>
+        <tr>
+          <td><code>hcahps</code></td>
+          <td>~1,200</td>
+          <td>ccn, measure_id, patient_survey_star_rating</td>
+          <td>Patient satisfaction survey results.</td>
+        </tr>
+        <tr>
+          <td><code>cost_reports</code></td>
+          <td>~865</td>
+          <td>account_id, total_costs, net_patient_revenue, fiscal_year</td>
+          <td>CMS cost report data for financial sizing.</td>
+        </tr>
+        <tr>
+          <td><code>cms_open_payments</code></td>
+          <td>299</td>
+          <td>account_id, payment_amount, physician_id, nature_of_payment</td>
+          <td>CMS Open Payments vendor relationship data.</td>
+        </tr>
+        <tr>
+          <td><code>npi_ccn_crosswalk</code></td>
+          <td>9,196</td>
+          <td>npi, ccn, account_id</td>
+          <td>NPI↔CCN mapping. Foundation for CMS data joins.</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h3>Signal & Territory Intelligence</h3>
+    <table>
+      <thead>
+        <tr>
+          <th>Table</th>
+          <th>Rows (approx)</th>
+          <th>Key Columns</th>
+          <th>Purpose</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><code>signal_events</code></td>
+          <td>Growing</td>
+          <td>account_id, signal_type, signal_date, source, score, content</td>
+          <td>Territory triggers: WARN, M&A, NIH, scoring shifts, 8-K filings.</td>
+        </tr>
+        <tr>
+          <td><code>warn_events</code></td>
+          <td>~400</td>
+          <td>account_id, company_name, warn_date, employees_affected, state</td>
+          <td>WARN Act layoff events matched to accounts. Top outbound signal.</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h3>Deliverables & Engagement Tracking</h3>
+    <table>
+      <thead>
+        <tr>
+          <th>Table</th>
+          <th>Rows (approx)</th>
+          <th>Key Columns</th>
+          <th>Purpose</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><code>account_artifacts</code></td>
+          <td>140+</td>
+          <td>account_id, artifact_type, title, content, url, created_at</td>
+          <td>Proposals, research, battlecards, call prep, email drafts per account.</td>
+        </tr>
+        <tr>
+          <td><code>deliverables</code></td>
+          <td>286+</td>
+          <td>title, type, url, location, category, build_state, session_date</td>
+          <td>All deployed outputs. build_state: initiated|planned|dispatched|running|complete|abandoned.</td>
+        </tr>
+        <tr>
+          <td><code>proposal_engagement</code></td>
+          <td>Growing</td>
+          <td>proposal_id, event_type, slide_id, session_id, ref_source</td>
+          <td>Slide-level engagement: proposal_opened, slide_viewed, time_on_slide.</td>
+        </tr>
+        <tr>
+          <td><code>campaign_events</code></td>
+          <td>Growing</td>
+          <td>campaign_id, contact_id, event_type, timestamp, metadata</td>
+          <td>Email open/click tracking. Verified end-to-end (not just pixel 200).</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h3>Key Views</h3>
+    <table>
+      <thead>
+        <tr>
+          <th>View</th>
+          <th>Purpose</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><code>v_parent_accounts</code></td>
+          <td>865 accounts → 469 parent orgs. Distribution: A=26, B=17, C=29, D=27, U1=35, U2=20, U3=315.</td>
+        </tr>
+        <tr>
+          <td><code>v_account_archetype</code></td>
+          <td>7 archetypes derived from scoring combination. Drives outreach framing.</td>
+        </tr>
+        <tr>
+          <td><code>v_campaign_coordination</code></td>
+          <td>Active campaign monitoring. Used by campaign-pm agent.</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="alert">
+      <strong>Account grouping canonical pattern:</strong> Always group by <code>COALESCE(canonical_account_id18, account_id18)</code> then by <code>ultimate_parent_duns</code>. Never group by bare <code>account_id18</code> alone or MIN/arbitrary ID selection. Source: <code>feedback_resolve_canonical_account_id_20260412.md</code>
+    </div>
+  </section>
+
+  <!-- ─────────────────────────────────────────── -->
+  <!-- SECTION 5: SCORING ENGINE REFERENCE         -->
+  <!-- ─────────────────────────────────────────── -->
+  <section id="scoring">
+    <h2><span class="num">5</span> Scoring Engine Reference</h2>
+    <p>Six engines score accounts across different dimensions. All outputs land in the <code>scoring</code> table. Use <code>tys_tier</code> for overall prioritization; sub-engines rank within their category only.</p>
+
+    <div class="alert red" style="margin-bottom:20px;">
+      <strong>FORBIDDEN columns (v5.5.0 era — OBSOLETE):</strong> <code>composite_score_v4</code>, <code>priority_tier_v4</code>, <code>p1_*</code> through <code>p5_*</code>, <code>v6_composite_score</code>, <code>v6_tier</code>, <code>v6_track</code>. Never reference these in any query, report, or code. Use <code>tys_*</code> columns. Enforced by <code>obsolete-scoring-gate.sh</code>.
+    </div>
+
+    <div class="engine-row">
+      <div class="engine-header">
+        <span class="engine-name">TYS — Territory Yield Score</span>
+        <span class="engine-version">v7.4</span>
+        <span class="engine-fn">score_territory_v7()</span>
+        <span class="tag tag-blue">Primary Engine</span>
+      </div>
+      <p style="margin-bottom:8px;">Commercial MuleSoft attractiveness across 4 pillars. Drives tier assignments and all territory prioritization. Max 65 pts.</p>
+      <div class="col-list">
+        <span class="col-pill">tys_composite_score</span>
+        <span class="col-pill">tys_tier</span>
+        <span class="col-pill">tys_rank</span>
+        <span class="col-pill">tys_isa</span>
+        <span class="col-pill">tys_sir</span>
+        <span class="col-pill">tys_revenue</span>
+        <span class="col-pill">tys_mulesoft_customer</span>
+      </div>
+      <div class="tier-row" style="margin-top:12px;">
+        <span class="tier-badge tier-t1">T1 ≥ 55</span>
+        <span class="tier-badge tier-t2">T2 ≥ 40</span>
+        <span class="tier-badge tier-t3">T3 ≥ 25</span>
+        <span class="tier-badge tier-t4">T4 &lt; 25</span>
+        <span style="font-size:11px;color:var(--muted);margin-left:8px;line-height:24px;">ISA max 20 · SIR max 15 · Revenue max 20 · MuleSoft customer max 10 · tys_ma_velocity REMOVED (hardcoded 0 in v7.4)</span>
+      </div>
+    </div>
+
+    <div class="engine-row">
+      <div class="engine-header">
+        <span class="engine-name">CHPS — CMS Hospital Peer Score</span>
+        <span class="engine-version">v1.1</span>
+        <span class="engine-fn">score_cms_v1()</span>
+        <span class="tag tag-orange">CMS Pain</span>
+      </div>
+      <p style="margin-bottom:8px;">Regulatory stress vs peers across HRRP, HAC, HVBP, HCAHPS. ~160 CMS-eligible hospitals. 0–100 percentile scale.</p>
+      <div class="col-list">
+        <span class="col-pill">cms_peer_score</span>
+        <span class="col-pill">cms_peer_rank</span>
+        <span class="col-pill">cms_peer_percentile</span>
+        <span class="col-pill">cms_peer_band</span>
+        <span class="col-pill">cms_pain_score</span>
+      </div>
+    </div>
+
+    <div class="engine-row">
+      <div class="engine-header">
+        <span class="engine-name">BHPS — Behavioral Health Propensity Score</span>
+        <span class="engine-version">v1</span>
+        <span class="engine-fn">score_behavioral_health_v1()</span>
+        <span class="tag tag-purple">Behavioral Health</span>
+      </div>
+      <p style="margin-bottom:8px;">High-propensity BH accounts. 21 accounts scored. Max 50 pts across 6 pillars (bhps_p1–p6).</p>
+      <div class="col-list">
+        <span class="col-pill">bhps_composite_score</span>
+        <span class="col-pill">bhps_p1</span>
+        <span class="col-pill">bhps_p2</span>
+        <span class="col-pill">bhps_p3</span>
+        <span class="col-pill">bhps_p4</span>
+        <span class="col-pill">bhps_p5</span>
+        <span class="col-pill">bhps_p6</span>
+        <span class="col-pill">bhps_tier</span>
+        <span class="col-pill">bhps_rank</span>
+      </div>
+      <div class="tier-row" style="margin-top:12px;">
+        <span class="tier-badge tier-t1">T1 ≥ 35</span>
+        <span class="tier-badge tier-t2">T2 25–34</span>
+        <span class="tier-badge tier-t3">T3 15–24</span>
+        <span class="tier-badge tier-t4">T4 &lt; 15</span>
+      </div>
+    </div>
+
+    <div class="engine-row">
+      <div class="engine-header">
+        <span class="engine-name">PSPS — Pediatric System Pressure Score</span>
+        <span class="engine-version">v1.4</span>
+        <span class="engine-fn">score_pediatric_v1()</span>
+        <span class="tag tag-blue">Pediatric</span>
+      </div>
+      <p style="margin-bottom:8px;">Children's hospital pressure scoring. Max 100 pts across 6 pillars. Includes reasons array for outreach framing.</p>
+      <div class="col-list">
+        <span class="col-pill">psps_composite_score</span>
+        <span class="col-pill">psps_p1</span>
+        <span class="col-pill">psps_p2</span>
+        <span class="col-pill">psps_p3</span>
+        <span class="col-pill">psps_p4</span>
+        <span class="col-pill">psps_p5</span>
+        <span class="col-pill">psps_p6</span>
+        <span class="col-pill">psps_tier</span>
+        <span class="col-pill">psps_rank</span>
+        <span class="col-pill">psps_band</span>
+        <span class="col-pill">psps_reasons</span>
+      </div>
+    </div>
+
+    <div class="engine-row">
+      <div class="engine-header">
+        <span class="engine-name">RMS — Rural Modernization Score</span>
+        <span class="engine-version">v1</span>
+        <span class="engine-fn">score_rural_modernization_v1()</span>
+        <span class="tag tag-green">Rural / CAH</span>
+      </div>
+      <p style="margin-bottom:8px;">Grant/340B-ripe rural and critical access hospitals. 87 eligible. Max 100 pts. Top pillar: Grant velocity (35 pts).</p>
+      <div class="col-list">
+        <span class="col-pill">rms_composite_score</span>
+        <span class="col-pill">rms_rank</span>
+        <span class="col-pill">rms_percentile</span>
+        <span class="col-pill">rms_band</span>
+        <span class="col-pill">rms_reasons</span>
+      </div>
+      <p style="margin-top:8px;font-size:12px;color:var(--muted);">Pillars: Grant velocity 35 · 340B velocity 15 · Revenue growth 15 · (additional pillars to max 100)</p>
+    </div>
+
+    <div class="engine-row">
+      <div class="engine-header">
+        <span class="engine-name">Golden Record</span>
+        <span class="engine-version">v2</span>
+        <span class="engine-fn">Python pipeline (not Supabase fn)</span>
+        <span class="tag tag-gray">Dedup / MDM</span>
+      </div>
+      <p style="margin-bottom:8px;">Account deduplication and canonicalization. Priority: <strong>HARD</strong> merge &gt; <strong>ACV</strong> (highest revenue) &gt; <strong>SOFT</strong> guess. Writeback gated on <code>mdm.approvals</code>. 313 proposals pending review as of last run.</p>
+      <div class="col-list">
+        <span class="col-pill">canonical_account_id18</span>
+        <span class="col-pill">ultimate_parent_duns</span>
+        <span class="col-pill">merge_type</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ─────────────────────────────────────────── -->
+  <!-- SECTION 6: AI INFRASTRUCTURE MAP            -->
+  <!-- ─────────────────────────────────────────── -->
+  <section id="ai-infra">
+    <h2><span class="num">6</span> AI Infrastructure</h2>
+    <p>The Claude Code AI layer is built from four components: enforcement hooks that physically gate bad actions, specialist agents that handle parallel workloads, skills that encode deep domain knowledge, and MCP servers that connect to every external system.</p>
+
+    <h3 id="hooks">Enforcement Hooks (18)</h3>
+    <p>Hooks run at <code>PreToolUse</code>, <code>PostToolUse</code>, <code>SessionStart</code>, and <code>SessionEnd</code>. They block patterns — not just advise against them. Registered in <code>~/.claude/settings.json</code>. Deployed via <code>make install</code> from <code>~/repos/claude-config/</code>.</p>
+
+    <div class="hook-list">
+      <div class="hook-item">
+        <div class="hook-name">plan-gate.sh</div>
+        <div class="hook-desc">Blocks all mutations (Edit/Write/Bash/MCP) while in Plan Mode. Prevents blocked-tool loops.</div>
+      </div>
+      <div class="hook-item">
+        <div class="hook-name">no-guess-gate.sh</div>
+        <div class="hook-desc">Blocks Supabase/Vercel/edge-function mutations unless a prior read was logged via breadcrumb.</div>
+      </div>
+      <div class="hook-item">
+        <div class="hook-name">exchange-first-gate.sh</div>
+        <div class="hook-desc">Blocks MuleSoft code creation without a prior Exchange search breadcrumb.</div>
+      </div>
+      <div class="hook-item">
+        <div class="hook-name">obsolete-scoring-gate.sh</div>
+        <div class="hook-desc">Blocks deprecated scoring column names (v5.5.0 era). Pattern-matches on file content at PreToolUse.</div>
+      </div>
+      <div class="hook-item">
+        <div class="hook-name">delivery-checklist-gate.sh</div>
+        <div class="hook-desc">Breadcrumb-based gate. Blocks declaring "done" without Supabase deliverables log. Fail-open.</div>
+      </div>
+      <div class="hook-item">
+        <div class="hook-name">config-sync.sh</div>
+        <div class="hook-desc">Auto-mirrors skill/memory edits to ~/repos/claude-config GitHub repo at PostToolUse.</div>
+      </div>
+      <div class="hook-item">
+        <div class="hook-name">pipeline-f-weekly.sh</div>
+        <div class="hook-desc">Sunday 22:00 cron. Self-learning pattern detection across session history (115 patterns, 7 rules).</div>
+      </div>
+      <div class="hook-item">
+        <div class="hook-name">config-sync-cron-win11.sh</div>
+        <div class="hook-desc">30-minute bidirectional sync between ~/.claude/ and GitHub. Windows scheduled task.</div>
+      </div>
+      <div class="hook-item">
+        <div class="hook-name">skill-router-gate.sh</div>
+        <div class="hook-desc">At UserPromptSubmit: scores catalog.json against prompt, injects top-3 skills when score ≥ 25.</div>
+      </div>
+      <div class="hook-item">
+        <div class="hook-name">no-guess-breadcrumb.sh</div>
+        <div class="hook-desc">Companion to no-guess-gate. Stamps breadcrumb after any Supabase/Vercel read.</div>
+      </div>
+      <div class="hook-item">
+        <div class="hook-name">pipeline-f-status.sh</div>
+        <div class="hook-desc">SessionStart: surfaces Pipeline-F run status, recurring patterns, and consolidation candidates.</div>
+      </div>
+      <div class="hook-item">
+        <div class="hook-name">pipeline-f-mirror.sh</div>
+        <div class="hook-desc">Mirrors pipeline-f output to ~/repos/claude-config/pipeline-f/ for cross-device access.</div>
+      </div>
+    </div>
+    <p style="margin-top:8px;font-size:12px;color:var(--muted);">+ 6 additional hooks (session-start orientation queries, knowledge export triggers, model dispatch guards)</p>
+
+    <h3 id="agents">Specialist Agents (5)</h3>
+    <p>Agents are dispatched via the <code>Agent</code> tool and run in parallel when independent. Model selection is cost-disciplined: Haiku for narrow/read-only tasks, Sonnet for analysis requiring reasoning depth.</p>
+
+    <div class="agent-list">
+      <div class="agent-item">
+        <div class="agent-name">territory-data-scientist</div>
+        <div class="agent-model">Claude Sonnet — intentional (reasoning depth required)</div>
+        <div class="agent-desc">Propensity analysis, scoring function development, backtests, model assumption validation, hot account identification via interaction features.</div>
+      </div>
+      <div class="agent-item">
+        <div class="agent-name">signal-scout</div>
+        <div class="agent-model">Claude Haiku</div>
+        <div class="agent-desc">Ad-hoc territory signal investigation. Cross-references signals, scoring, contacts, and technographic data. Uses Tavily for real-time web enrichment.</div>
+      </div>
+      <div class="agent-item">
+        <div class="agent-name">campaign-pm</div>
+        <div class="agent-model">Claude Haiku</div>
+        <div class="agent-desc">Active campaign monitoring. Surfaces conflicts, flags unresolved template variables, detects engagement without follow-up, checks deal stage before outreach.</div>
+      </div>
+      <div class="agent-item">
+        <div class="agent-name">territory-signal-agent</div>
+        <div class="agent-model">Claude Haiku</div>
+        <div class="agent-desc">Reads pre-computed signals from signal_events. Returns ranked trigger-event brief for Michael's MuleSoft Healthcare territory.</div>
+      </div>
+      <div class="agent-item">
+        <div class="agent-name">healthcare-reviewer</div>
+        <div class="agent-model">Claude Haiku</div>
+        <div class="agent-desc">Healthcare domain review for proposals, briefs, and clinical accuracy. Validates framing against CMS/FHIR/ICD domain knowledge.</div>
+      </div>
+    </div>
+
+    <h3>Skills (73+ domains)</h3>
+    <p>Skills encode deep domain knowledge and are routed automatically by <code>skill-router-gate.sh</code> via <code>~/.claude/references/catalog/catalog.json</code>. Key skill domains:</p>
+    <div style="display:flex;flex-wrap:wrap;gap:8px;margin:12px 0;">
+      <span class="tag tag-blue">solution-architect</span>
+      <span class="tag tag-blue">mulesoft-developer</span>
+      <span class="tag tag-blue">cto-lens</span>
+      <span class="tag tag-orange">campaign-builder</span>
+      <span class="tag tag-orange">scoring-engine</span>
+      <span class="tag tag-green">signal-brief</span>
+      <span class="tag tag-green">territory-intel</span>
+      <span class="tag tag-purple">notebooklm</span>
+      <span class="tag tag-purple">design-doc</span>
+      <span class="tag tag-gray">security-review</span>
+      <span class="tag tag-gray">proposal-deploy</span>
+      <span class="tag tag-gray">wd-trading (20+ skills)</span>
+    </div>
+
+    <h3 id="mcps">MCP Servers (14+)</h3>
+    <div class="mcp-grid">
+      <div class="mcp-item">
+        <div class="mcp-name">Supabase (SmokinTerritory)</div>
+        <div class="mcp-desc">cnplogkxbjecdeeritdl · Primary CRM/territory DB</div>
+      </div>
+      <div class="mcp-item">
+        <div class="mcp-name">Supabase (Whiskey Down)</div>
+        <div class="mcp-desc">wwmhnjfmrbqemeygygcn · Isolated trading project</div>
+      </div>
+      <div class="mcp-item">
+        <div class="mcp-name">Slack</div>
+        <div class="mcp-desc">Team communication, campaign alerts</div>
+      </div>
+      <div class="mcp-item">
+        <div class="mcp-name">Apollo.io</div>
+        <div class="mcp-desc">Contact enrichment, prospecting</div>
+      </div>
+      <div class="mcp-item">
+        <div class="mcp-name">Vercel</div>
+        <div class="mcp-desc">Deploy, logs, project management</div>
+      </div>
+      <div class="mcp-item">
+        <div class="mcp-name">ZoomInfo</div>
+        <div class="mcp-desc">Account and contact enrichment</div>
+      </div>
+      <div class="mcp-item">
+        <div class="mcp-name">NPI Registry</div>
+        <div class="mcp-desc">Provider lookup, NPI validation</div>
+      </div>
+      <div class="mcp-item">
+        <div class="mcp-name">CMS Coverage</div>
+        <div class="mcp-desc">CMS reimbursement and quality data</div>
+      </div>
+      <div class="mcp-item">
+        <div class="mcp-name">MuleSoft MCP</div>
+        <div class="mcp-desc">Anypoint Platform: create projects, generate flows, deploy, search Exchange</div>
+      </div>
+      <div class="mcp-item">
+        <div class="mcp-name">TraderMonty OpenBB</div>
+        <div class="mcp-desc">Market data, earnings, technical indicators</div>
+      </div>
+      <div class="mcp-item">
+        <div class="mcp-name">Hindsight</div>
+        <div class="mcp-desc">Persistent cross-session memory. retain/recall/reflect/directives</div>
+      </div>
+      <div class="mcp-item">
+        <div class="mcp-name">Knowledge Base</div>
+        <div class="mcp-desc">RAG via Qdrant. 4 collections on Railway.</div>
+      </div>
+      <div class="mcp-item">
+        <div class="mcp-name">Figma</div>
+        <div class="mcp-desc">Design asset access for proposals</div>
+      </div>
+      <div class="mcp-item">
+        <div class="mcp-name">Google Drive</div>
+        <div class="mcp-desc">Deliverable storage, account folder sync</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ─────────────────────────────────────────── -->
+  <!-- SECTION 7: SYSTEM BOUNDARIES                -->
+  <!-- ─────────────────────────────────────────── -->
+  <section id="boundaries">
+    <h2><span class="num">7</span> System Boundaries</h2>
+    <p>Two Supabase projects serve entirely different workloads with a hard isolation rule enforced at both the code and infrastructure level. No cross-project SQL joins ever. Data moves at the application layer only, with explicit approval.</p>
+
+    <div class="isolation-box">
+      <div class="project-card st">
+        <h3>SmokinTerritory</h3>
+        <table style="font-size:12px;">
+          <tbody>
+            <tr><td class="muted" style="width:120px;padding:5px 8px;">Project ID</td><td style="padding:5px 8px;"><code>cnplogkxbjecdeeritdl</code></td></tr>
+            <tr><td class="muted" style="padding:5px 8px;">Region</td><td style="padding:5px 8px;">us-west-2</td></tr>
+            <tr><td class="muted" style="padding:5px 8px;">Env Vars</td><td style="padding:5px 8px;"><code>SUPABASE_URL</code>, <code>SUPABASE_KEY</code></td></tr>
+            <tr><td class="muted" style="padding:5px 8px;">Primary Use</td><td style="padding:5px 8px;">Territory CRM, scoring, campaigns, proposals, contacts</td></tr>
+            <tr><td class="muted" style="padding:5px 8px;">Accounts</td><td style="padding:5px 8px;">865 (469 parent orgs)</td></tr>
+            <tr><td class="muted" style="padding:5px 8px;">DDL method</td><td style="padding:5px 8px;">execute_sql or apply_migration</td></tr>
+            <tr><td class="muted" style="padding:5px 8px;">Deliverables</td><td style="padding:5px 8px;">ST work only → ST deliverables table</td></tr>
+            <tr><td class="muted" style="padding:5px 8px;">Frontend</td><td style="padding:5px 8px;">smokin-territory.vercel.app · Plotly.js v2.27.0</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="project-card wd">
+        <h3>Whiskey Down (Isolated)</h3>
+        <table style="font-size:12px;">
+          <tbody>
+            <tr><td class="muted" style="width:120px;padding:5px 8px;">Project ID</td><td style="padding:5px 8px;"><code>wwmhnjfmrbqemeygygcn</code></td></tr>
+            <tr><td class="muted" style="padding:5px 8px;">Region</td><td style="padding:5px 8px;">us-west-1</td></tr>
+            <tr><td class="muted" style="padding:5px 8px;">Env Vars</td><td style="padding:5px 8px;"><code>WD_SUPABASE_URL</code>, <code>WD_SUPABASE_KEY</code></td></tr>
+            <tr><td class="muted" style="padding:5px 8px;">Primary Use</td><td style="padding:5px 8px;">Trading, backtests, candidate store, ideas</td></tr>
+            <tr><td class="muted" style="padding:5px 8px;">Key Tables</td><td style="padding:5px 8px;">backtests, trades, candidates, ideas, published_ideas_store</td></tr>
+            <tr><td class="muted" style="padding:5px 8px;">DDL method</td><td style="padding:5px 8px;">apply_migration ONLY (execute_sql = read/DML)</td></tr>
+            <tr><td class="muted" style="padding:5px 8px;">Deliverables</td><td style="padding:5px 8px;">WD work only → WD deliverables table</td></tr>
+            <tr><td class="muted" style="padding:5px 8px;">Special rule</td><td style="padding:5px 8px;">published_ideas_store is INSERT-only (freeze_role, RLS denies UPDATE/DELETE)</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="boundary-rule">
+      <strong>HARD RULES — Never violate:</strong><br><br>
+      1. <strong>Never cross the streams.</strong> SmokinTerritory tables must never be queried from a Whiskey Down task and vice versa.<br><br>
+      2. <strong>No cross-project SQL joins.</strong> Zero dblink, zero foreign data wrapper, zero table references across project IDs in any SQL statement.<br><br>
+      3. <strong>WD_ prefix enforces project routing.</strong> Any code referencing <code>WD_SUPABASE_URL</code> or <code>WD_SUPABASE_KEY</code> operates on Whiskey Down ONLY.<br><br>
+      4. <strong>Never dual-write.</strong> If a WD build row is found on SmokinTerritory (legacy error), migrate it to the WD project then DELETE the SmokinTerritory row.<br><br>
+      5. <strong>Ambiguous task?</strong> ASK Michael which project — never guess.
+    </div>
+
+    <h3 style="margin-top: 28px;">Smokin Decision — Separate App Boundary</h3>
+    <div class="card" style="margin-top:12px;">
+      <p style="margin-bottom:10px;">Smokin Decision is a separate application with its own Railway backend and Vercel frontend. It shares the SmokinTerritory Supabase project for account data but runs as an independent service.</p>
+      <table style="font-size:13px;">
+        <tbody>
+          <tr><td class="muted" style="width:140px;padding:6px 10px;">Frontend</td><td style="padding:6px 10px;">https://smokin-decision.vercel.app</td></tr>
+          <tr><td class="muted" style="padding:6px 10px;">Backend</td><td style="padding:6px 10px;">https://smokin-decision-production.up.railway.app</td></tr>
+          <tr><td class="muted" style="padding:6px 10px;">Features</td><td style="padding:6px 10px;">Verdict engine · Blind spot detector (P1J) · Steelman button (P1K) · Shareable /verdict/[id] routes (P1I)</td></tr>
+          <tr><td class="muted" style="padding:6px 10px;">Status</td><td style="padding:6px 10px;color:var(--green);">LIVE — deliverables.id=286</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3>Frontend Stack Summary</h3>
+    <div class="card" style="margin-top:12px;">
+      <p><strong>Stack:</strong> Vanilla HTML + CSS + Plotly.js v2.27.0. No React, no Next.js, no TypeScript on the frontend.</p>
+      <p><strong>Key pages:</strong> <code>index.html</code> (Territory Intel Map — Plotly.js charts, account cards, tier/track filtering) · <code>signals.html</code> (Signal Brief dashboard)</p>
+      <p><strong>Public proposals:</strong> <code>m9751.github.io/[repo-name]/</code> via GitHub Pages — customer-facing, never internal data.</p>
+      <p style="margin-bottom:0;"><strong>Vercel serverless functions:</strong> <code>api/signals.py</code> · <code>api/brief.py</code> · <code>api/campaign_beacon.py</code> · <code>api/beacon.js</code> · <code>api/campaign_click.py</code> · Cron: <code>/api/brief?format=json&amp;days=7</code> Mon–Fri 11:00 UTC</p>
+    </div>
+  </section>
+
+  <div style="padding: 32px 0 48px; border-top: 1px solid var(--border); margin-top: 16px;">
+    <p style="font-size:12px;">Generated 2026-04-22 · Internal reference · SmokinTerritory v2026-04-22 · No engagement beacon (internal use only)</p>
+  </div>
+
+</main>
+
+<script>
+  // Highlight active nav item on scroll
+  const sections = document.querySelectorAll('section[id]');
+  const navLinks = document.querySelectorAll('nav a');
+
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        navLinks.forEach(link => {
+          link.classList.remove('active');
+          if (link.getAttribute('href') === '#' + entry.target.id) {
+            link.classList.add('active');
+          }
+        });
+      }
+    });
+  }, { threshold: 0.2 });
+
+  sections.forEach(section => observer.observe(section));
+</script>
+
+</body>
+</html>
