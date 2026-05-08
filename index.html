@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>SmokinTerritory — Architecture Reference</title>
+<title>SmokinTerritory — Architecture Reference v3</title>
 <style>
   :root {
     --bg: #0A1628;
@@ -456,6 +456,41 @@
 
   .boundary-rule strong { color: var(--red); }
 
+  .changelog {
+    background: linear-gradient(180deg, rgba(0,161,223,0.08), rgba(16,185,129,0.05));
+    border: 1px solid rgba(0,161,223,0.35);
+    border-radius: 10px;
+    padding: 18px 22px;
+    margin-bottom: 40px;
+    font-size: 13px;
+  }
+  .changelog .cl-title {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--blue);
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    margin-bottom: 10px;
+  }
+  .changelog ul { list-style: none; padding-left: 0; }
+  .changelog li {
+    padding: 5px 0;
+    color: var(--text);
+    border-bottom: 1px dashed rgba(30,58,95,0.6);
+  }
+  .changelog li:last-child { border-bottom: none; }
+  .changelog li strong { color: var(--green); }
+  .changelog .delta { color: var(--orange); font-weight: 600; font-family: 'SF Mono', monospace; }
+
+  .project-card.so { border: 2px solid var(--orange); }
+  .project-card.so h3 { color: var(--orange); }
+  .isolation-three {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 18px;
+    margin: 20px 0;
+  }
+
   code {
     font-family: 'SF Mono', 'Fira Code', monospace;
     font-size: 12px;
@@ -500,9 +535,10 @@
   </ul>
   <div class="nav-section">Quick Ref</div>
   <ul>
-    <li><a href="#hooks">Hooks (18)</a></li>
+    <li><a href="#hooks">Hooks (25)</a></li>
     <li><a href="#agents">Agents (5)</a></li>
-    <li><a href="#mcps">MCP Servers (14+)</a></li>
+    <li><a href="#mcps">MCP Servers (16+)</a></li>
+    <li><a href="#ssl">Smokin Semantic Layer v1</a></li>
   </ul>
 </nav>
 
@@ -512,9 +548,27 @@
     <h1>SmokinTerritory Architecture Reference</h1>
     <div class="meta">
       <span class="badge">INTERNAL</span>
-      <span class="badge">v2026-04-22</span>
+      <span class="badge" style="color:var(--green);border-color:rgba(16,185,129,0.4);">v3 · 2026-05-08</span>
+      <span class="badge" style="color:var(--muted);">supersedes v2 · 2026-04-26</span>
       <span style="color:var(--muted)">Michael Busacca · Enterprise AE, MuleSoft Healthcare · Salesforce</span>
     </div>
+  </div>
+
+  <!-- ─────────────────────────────────────────── -->
+  <!-- v3 CHANGELOG BAND                           -->
+  <!-- ─────────────────────────────────────────── -->
+  <div class="changelog">
+    <div class="cl-title">What's new since v2 (2026-04-26 → 2026-05-08)</div>
+    <ul>
+      <li><strong>Δ pgvector gate: <span class="delta">NO-GO (FAIL)</span></strong> — verified MOOT 2026-05-07. Original $20–25/mo Qdrant cost premise was wrong (actual $0/mo on Vectorize/Hindsight). Migration would have <em>added</em> $8–15/mo. Confidence HIGH. Source: <code>deliverables.id=319</code> (drafted 2026-04-26, Phase 7 SPOF neutralized 9 days early). Qdrant stays.</li>
+      <li><strong>Δ TYS scoring engine: <span class="delta">v7.4 → v7.6_threshold_recal</span></strong> — adds <code>ae_tier_override</code> path that wins over both active-rescore and inactive-zero-out branches. Threshold recalibration in tier band cutoffs.</li>
+      <li><strong>+ Convergence Plan closed</strong> — all 9 phases + Phase 0/B/C done 2026-04-26 evening. Phase 7 formally closed 2026-05-06. Commitment A (Qdrant→pgvector swap-readiness) <em>dropped</em> from architectural sub-track.</li>
+      <li><strong>Δ Hooks: 19 → 25.</strong> +6 hooks added since v2 (2026-04-26 → 2026-05-08). Includes <code>source-truth-write-gate</code>, <code>source-truth-declare</code>, and others. <span class="delta">local probe: hooks=25</span></li>
+      <li><strong>Δ Custom skills: 89 → 81.</strong> Net −8 from consolidation. Catalog total (1,384) unchanged — plugin marketplace skills unaffected. <span class="delta">local probe: skills=81</span></li>
+      <li><strong>+ Token-burn cleanup</strong> (2026-05-07, claude-config <code>35c7432</code>) — removed <code>rules/archived/</code> subtree + 6 Pipeline-F stubs. Net auto-load reduction ~10.9K tokens/turn.</li>
+      <li><strong>+ SSL / Feature Functions confirmed:</strong> 3 deterministic Postgres functions — <code>classify_ics_signal_v1</code>, <code>get_engagement_gate_v1</code>, <code>get_hrrp_exposure_v1</code>. No new SSL fns since 2026-04-25.</li>
+      <li><strong>+ smokin-ops stable</strong> — Supabase org RealFishTaco (us-west-1, PG 17.6.1.105, ~$10/mo). KB pipeline: 15,267 pts across 4 collections. Cross-project refs by string ID only.</li>
+    </ul>
   </div>
 
   <!-- ─────────────────────────────────────────── -->
@@ -523,11 +577,11 @@
   <section id="overview">
     <h2><span class="num">1</span> Architecture Overview</h2>
 
-    <p>SmokinTerritory is a territory intelligence platform built to surface the right healthcare accounts at the right time for MuleSoft pipeline generation. It combines a Supabase PostgreSQL data warehouse (865 accounts, 469 unique parent organizations), a Vercel-hosted dashboard, GitHub Actions signal pipelines, and a Claude Code AI layer with 18 enforcement hooks, 5 specialist agents, 73+ skills, and 14+ MCP server connections — all coordinated to reduce pipeline research from hours to minutes.</p>
+    <p>SmokinTerritory is a territory intelligence platform built to surface the right healthcare accounts at the right time for MuleSoft pipeline generation. It combines a Supabase PostgreSQL data warehouse (865 accounts, 469 unique parent organizations), a Vercel-hosted dashboard, GitHub Actions signal pipelines, and a Claude Code AI layer with 25 enforcement hooks, 5 specialist agents, 1,384 cataloged skills, and 16+ MCP server connections — all coordinated to reduce pipeline research from hours to minutes.</p>
 
-    <p>The architecture has three layers: a <strong>compute layer</strong> (Vercel for frontend/APIs, GitHub Actions for pipeline orchestration, Railway for persistent services), a <strong>data layer</strong> (Supabase for structured CRM data, Qdrant for vector search, Hindsight for cross-session AI memory), and an <strong>AI infrastructure layer</strong> (Claude Code orchestrating specialized agents via hooks, skills, and MCP tools). A fully isolated second Supabase project (<strong>Whiskey Down</strong>) handles trading/backtesting workloads with a hard zero-cross-join boundary.</p>
+    <p>The architecture has three layers: a <strong>compute layer</strong> (Vercel for frontend/APIs, GitHub Actions for pipeline orchestration, Railway for persistent services), a <strong>data layer</strong> (three Supabase projects for structured CRM/trading/observability data, Qdrant for vector search, Hindsight for cross-session AI memory), and an <strong>AI infrastructure layer</strong> (Claude Code orchestrating specialized agents via hooks, skills, and MCP tools). The second Supabase project (<strong>Whiskey Down</strong>) handles trading/backtesting in isolation; the third (<strong>smokin-ops</strong>, schema TBD) is the system-of-record for runs/audit/observability. All three sit behind a hard zero-cross-join boundary and share a unified PR-gated migration workflow.</p>
 
-    <p>Six scoring engines — TYS v7.4, CHPS v1.1, BHPS v1, PSPS v1.4, RMS v1, and Golden Record v2 — produce tier assignments and composite scores that drive account prioritization, campaign sequencing, and proposal routing.</p>
+    <p>Six scoring engines — TYS v7.6_threshold_recal, CHPS v1.1, BHPS v1.0, PSPS v1.4, RMS v1, and Golden Record v2 — produce tier assignments and composite scores. The <strong>Smokin Semantic Layer v1</strong> (Feature Functions v1, shipped 2026-04-25) sits alongside as a deterministic decision-function layer (ICS classify · HRRP exposure · engagement gate); pgvector gate closed NO-GO 2026-05-06 — engine-folding deferred indefinitely.</p>
 
     <div class="card-grid" style="margin-top: 24px;">
       <div class="card-sm">
@@ -536,29 +590,39 @@
         <div class="sub">469 unique parent orgs (by ultimate_parent_duns)</div>
       </div>
       <div class="card-sm">
+        <div class="label">Supabase Projects</div>
+        <div class="value">3</div>
+        <div class="sub">ST · Whiskey Down · smokin-ops (TBD)</div>
+      </div>
+      <div class="card-sm">
         <div class="label">Scoring Engines</div>
-        <div class="value">6</div>
-        <div class="sub">TYS · CHPS · BHPS · PSPS · RMS · Golden Record</div>
+        <div class="value">6 + SSL v1</div>
+        <div class="sub">TYS · CHPS · BHPS · PSPS · RMS · Golden Record + 3 SSL fns</div>
       </div>
       <div class="card-sm">
         <div class="label">AI Hooks</div>
-        <div class="value">18</div>
+        <div class="value">19</div>
         <div class="sub">Enforcement gates at PreToolUse / PostToolUse / Session</div>
       </div>
       <div class="card-sm">
-        <div class="label">Skills</div>
-        <div class="value">73+</div>
-        <div class="sub">Routed via catalog.json at UserPromptSubmit</div>
+        <div class="label">Skills (cataloged)</div>
+        <div class="value">1,384</div>
+        <div class="sub">Custom + plugin marketplaces; routed via catalog.json</div>
       </div>
       <div class="card-sm">
         <div class="label">MCP Servers</div>
-        <div class="value">14+</div>
-        <div class="sub">Supabase, Slack, Apollo, ZoomInfo, MuleSoft, and more</div>
+        <div class="value">16+</div>
+        <div class="sub">Supabase ×3, Slack, Apollo, ZoomInfo, MuleSoft, and more</div>
       </div>
       <div class="card-sm">
         <div class="label">Contacts</div>
         <div class="value">916</div>
         <div class="sub">Linked to 114 accounts</div>
+      </div>
+      <div class="card-sm">
+        <div class="label">KB Collections (Qdrant)</div>
+        <div class="value">4</div>
+        <div class="sub">research_general · _mulesoft · _wd · _architecture</div>
       </div>
     </div>
   </section>
@@ -636,58 +700,67 @@
 
         <!-- DATA LAYER BOXES -->
         <!-- Supabase ST -->
-        <rect x="72" y="234" width="240" height="124" rx="8" fill="#162440" stroke="#00A1DF" stroke-width="2"/>
-        <text x="192" y="260" fill="#00A1DF" font-size="13" font-weight="700" text-anchor="middle">Supabase — SmokinTerritory</text>
-        <text x="192" y="278" fill="#94A3B8" font-size="10" text-anchor="middle">cnplogkxbjecdeeritdl · us-west-2</text>
-        <text x="192" y="295" fill="#94A3B8" font-size="10" text-anchor="middle">PostgreSQL · 865 accounts</text>
-        <text x="192" y="311" fill="#94A3B8" font-size="10" text-anchor="middle">scoring · contacts · campaigns</text>
-        <text x="192" y="327" fill="#94A3B8" font-size="10" text-anchor="middle">signal_events · deliverables</text>
-        <text x="192" y="343" fill="#94A3B8" font-size="10" text-anchor="middle">hospital_quality · ehr_data</text>
+        <rect x="60" y="234" width="180" height="124" rx="8" fill="#162440" stroke="#00A1DF" stroke-width="2"/>
+        <text x="150" y="260" fill="#00A1DF" font-size="12" font-weight="700" text-anchor="middle">Supabase — SmokinTerritory</text>
+        <text x="150" y="278" fill="#94A3B8" font-size="9" text-anchor="middle">cnplogkxbjecdeeritdl · us-west-2</text>
+        <text x="150" y="295" fill="#94A3B8" font-size="10" text-anchor="middle">PostgreSQL · 865 accounts</text>
+        <text x="150" y="311" fill="#94A3B8" font-size="10" text-anchor="middle">scoring · contacts · campaigns</text>
+        <text x="150" y="327" fill="#94A3B8" font-size="10" text-anchor="middle">signal_events · deliverables</text>
+        <text x="150" y="343" fill="#94A3B8" font-size="10" text-anchor="middle">+ Smokin Semantic Layer v1</text>
 
         <!-- Supabase WD -->
-        <rect x="342" y="234" width="220" height="124" rx="8" fill="#162440" stroke="#8B5CF6" stroke-width="1.5" stroke-dasharray="6,3"/>
-        <text x="452" y="260" fill="#A78BFA" font-size="13" font-weight="700" text-anchor="middle">Supabase — Whiskey Down</text>
-        <text x="452" y="278" fill="#94A3B8" font-size="10" text-anchor="middle">wwmhnjfmrbqemeygygcn · us-west-1</text>
-        <text x="452" y="295" fill="#94A3B8" font-size="10" text-anchor="middle">ISOLATED · WD_ env vars only</text>
-        <text x="452" y="311" fill="#94A3B8" font-size="10" text-anchor="middle">backtests · trades · candidates</text>
-        <text x="452" y="327" fill="#94A3B8" font-size="10" text-anchor="middle">ideas · published_ideas_store</text>
-        <text x="452" y="343" fill="#94A3B8" font-size="10" text-anchor="middle">Zero cross-project SQL joins</text>
+        <rect x="252" y="234" width="180" height="124" rx="8" fill="#162440" stroke="#8B5CF6" stroke-width="1.5" stroke-dasharray="6,3"/>
+        <text x="342" y="260" fill="#A78BFA" font-size="12" font-weight="700" text-anchor="middle">Supabase — Whiskey Down</text>
+        <text x="342" y="278" fill="#94A3B8" font-size="9" text-anchor="middle">wwmhnjfmrbqemeygygcn · us-west-1</text>
+        <text x="342" y="295" fill="#94A3B8" font-size="10" text-anchor="middle">ISOLATED · WD_ env vars only</text>
+        <text x="342" y="311" fill="#94A3B8" font-size="10" text-anchor="middle">backtests · trades · candidates</text>
+        <text x="342" y="327" fill="#94A3B8" font-size="10" text-anchor="middle">published_ideas_store (RLS)</text>
+        <text x="342" y="343" fill="#94A3B8" font-size="10" text-anchor="middle">Zero cross-project joins</text>
 
-        <!-- Qdrant -->
-        <rect x="592" y="234" width="195" height="124" rx="8" fill="#162440" stroke="#10B981" stroke-width="1.5"/>
-        <text x="689" y="260" fill="#34D399" font-size="13" font-weight="700" text-anchor="middle">Qdrant</text>
-        <text x="689" y="278" fill="#94A3B8" font-size="11" text-anchor="middle">Railway · profound-grace</text>
-        <text x="689" y="295" fill="#94A3B8" font-size="10" text-anchor="middle">4 knowledge base collections</text>
-        <text x="689" y="311" fill="#94A3B8" font-size="10" text-anchor="middle">RAG for territory research</text>
-        <text x="689" y="327" fill="#94A3B8" font-size="10" text-anchor="middle">MuleSoft docs · account KB</text>
-        <text x="689" y="343" fill="#94A3B8" font-size="10" text-anchor="middle">Accessed via KB MCP</text>
+        <!-- Supabase smokin-ops (NEW v2) -->
+        <rect x="444" y="234" width="180" height="124" rx="8" fill="#162440" stroke="#F59E0B" stroke-width="1.5" stroke-dasharray="6,3"/>
+        <text x="534" y="260" fill="#FCD34D" font-size="12" font-weight="700" text-anchor="middle">Supabase — smokin-ops</text>
+        <text x="534" y="278" fill="#94A3B8" font-size="9" text-anchor="middle">xuvdcygqyuajtlpavafr · NEW</text>
+        <text x="534" y="295" fill="#94A3B8" font-size="10" text-anchor="middle">SoR · runs log · audit log</text>
+        <text x="534" y="311" fill="#94A3B8" font-size="10" text-anchor="middle">kb schema (observability)</text>
+        <text x="534" y="327" fill="#94A3B8" font-size="10" text-anchor="middle">pgvector ext installed</text>
+        <text x="534" y="343" fill="#94A3B8" font-size="10" text-anchor="middle">Schema TBD · 2026-04-26</text>
+
+        <!-- Qdrant (gate FAILED 2026-05-06 — Qdrant stays) -->
+        <rect x="636" y="234" width="170" height="124" rx="8" fill="#162440" stroke="#10B981" stroke-width="1.5"/>
+        <text x="721" y="260" fill="#34D399" font-size="13" font-weight="700" text-anchor="middle">Qdrant</text>
+        <text x="721" y="278" fill="#94A3B8" font-size="10" text-anchor="middle">Railway · profound-grace</text>
+        <text x="721" y="295" fill="#94A3B8" font-size="10" text-anchor="middle">4 KB collections</text>
+        <text x="721" y="311" fill="#94A3B8" font-size="10" text-anchor="middle">_general · _mulesoft</text>
+        <text x="721" y="327" fill="#94A3B8" font-size="10" text-anchor="middle">_wd · _architecture</text>
+        <text x="721" y="343" fill="#94A3B8" font-size="10" text-anchor="middle">gate FAILED 2026-05-06 — Qdrant stays</text>
 
         <!-- Hindsight -->
-        <rect x="817" y="234" width="195" height="124" rx="8" fill="#162440" stroke="#F59E0B" stroke-width="1.5"/>
-        <text x="914" y="260" fill="#FCD34D" font-size="13" font-weight="700" text-anchor="middle">Hindsight MCP</text>
-        <text x="914" y="278" fill="#94A3B8" font-size="11" text-anchor="middle">Persistent cross-session memory</text>
-        <text x="914" y="295" fill="#94A3B8" font-size="10" text-anchor="middle">retain / recall / reflect</text>
-        <text x="914" y="311" fill="#94A3B8" font-size="10" text-anchor="middle">directives · mental models</text>
-        <text x="914" y="327" fill="#94A3B8" font-size="10" text-anchor="middle">Both ST + WD projects</text>
-        <text x="914" y="343" fill="#94A3B8" font-size="10" text-anchor="middle">Validated 2026-04-20</text>
+        <rect x="818" y="234" width="170" height="124" rx="8" fill="#162440" stroke="#F59E0B" stroke-width="1.5"/>
+        <text x="903" y="260" fill="#FCD34D" font-size="13" font-weight="700" text-anchor="middle">Hindsight MCP</text>
+        <text x="903" y="278" fill="#94A3B8" font-size="10" text-anchor="middle">Cross-session memory</text>
+        <text x="903" y="295" fill="#94A3B8" font-size="10" text-anchor="middle">retain / recall / reflect</text>
+        <text x="903" y="311" fill="#94A3B8" font-size="10" text-anchor="middle">directives · mental models</text>
+        <text x="903" y="327" fill="#94A3B8" font-size="10" text-anchor="middle">All 3 projects</text>
+        <text x="903" y="343" fill="#94A3B8" font-size="10" text-anchor="middle">Validated 2026-04-20</text>
 
         <!-- Google Drive -->
-        <rect x="1032" y="234" width="135" height="124" rx="8" fill="#162440" stroke="#6B7280" stroke-width="1.5"/>
-        <text x="1099" y="260" fill="#E2E8F0" font-size="13" font-weight="700" text-anchor="middle">Google Drive</text>
-        <text x="1099" y="278" fill="#94A3B8" font-size="10" text-anchor="middle">Deliverables archive</text>
-        <text x="1099" y="295" fill="#94A3B8" font-size="10" text-anchor="middle">HTML + PDF source</text>
-        <text x="1099" y="311" fill="#94A3B8" font-size="10" text-anchor="middle">Account folders</text>
-        <text x="1099" y="327" fill="#94A3B8" font-size="10" text-anchor="middle">Auto-sync via</text>
-        <text x="1099" y="343" fill="#94A3B8" font-size="10" text-anchor="middle">CloudStorage link</text>
+        <rect x="1000" y="234" width="170" height="124" rx="8" fill="#162440" stroke="#6B7280" stroke-width="1.5"/>
+        <text x="1085" y="260" fill="#E2E8F0" font-size="13" font-weight="700" text-anchor="middle">Google Drive</text>
+        <text x="1085" y="278" fill="#94A3B8" font-size="10" text-anchor="middle">Deliverables archive</text>
+        <text x="1085" y="295" fill="#94A3B8" font-size="10" text-anchor="middle">HTML + PDF source</text>
+        <text x="1085" y="311" fill="#94A3B8" font-size="10" text-anchor="middle">Account folders</text>
+        <text x="1085" y="327" fill="#94A3B8" font-size="10" text-anchor="middle">Auto-sync via</text>
+        <text x="1085" y="343" fill="#94A3B8" font-size="10" text-anchor="middle">CloudStorage link</text>
 
         <!-- AI LAYER BOXES -->
         <!-- Hooks -->
         <rect x="72" y="424" width="190" height="100" rx="8" fill="#162440" stroke="#EF4444" stroke-width="1.5"/>
-        <text x="167" y="448" fill="#F87171" font-size="13" font-weight="700" text-anchor="middle">Hooks (18)</text>
+        <text x="167" y="448" fill="#F87171" font-size="13" font-weight="700" text-anchor="middle">Hooks (25)</text>
         <text x="167" y="466" fill="#94A3B8" font-size="10" text-anchor="middle">Enforcement gates</text>
         <text x="167" y="481" fill="#94A3B8" font-size="10" text-anchor="middle">PreToolUse · PostToolUse</text>
         <text x="167" y="496" fill="#94A3B8" font-size="10" text-anchor="middle">SessionStart · SessionEnd</text>
-        <text x="167" y="511" fill="#94A3B8" font-size="10" text-anchor="middle">plan-gate · no-guess · exchange</text>
+        <text x="167" y="511" fill="#94A3B8" font-size="10" text-anchor="middle">plan · no-guess · claim-evidence</text>
 
         <!-- Agents -->
         <rect x="282" y="424" width="190" height="100" rx="8" fill="#162440" stroke="#00A1DF" stroke-width="1.5"/>
@@ -699,15 +772,15 @@
 
         <!-- Skills -->
         <rect x="492" y="424" width="190" height="100" rx="8" fill="#162440" stroke="#8B5CF6" stroke-width="1.5"/>
-        <text x="587" y="448" fill="#A78BFA" font-size="13" font-weight="700" text-anchor="middle">Skills (73+)</text>
-        <text x="587" y="466" fill="#94A3B8" font-size="10" text-anchor="middle">Routed via catalog.json</text>
-        <text x="587" y="481" fill="#94A3B8" font-size="10" text-anchor="middle">solution-architect · campaign</text>
-        <text x="587" y="496" fill="#94A3B8" font-size="10" text-anchor="middle">scoring · cto-lens · mulesoft</text>
-        <text x="587" y="511" fill="#94A3B8" font-size="10" text-anchor="middle">At UserPromptSubmit</text>
+        <text x="587" y="448" fill="#A78BFA" font-size="13" font-weight="700" text-anchor="middle">Skills (1,384)</text>
+        <text x="587" y="466" fill="#94A3B8" font-size="10" text-anchor="middle">Cataloged · catalog.json</text>
+        <text x="587" y="481" fill="#94A3B8" font-size="10" text-anchor="middle">89 custom + plugin marketplaces</text>
+        <text x="587" y="496" fill="#94A3B8" font-size="10" text-anchor="middle">Filesystem-walked from SKILL.md</text>
+        <text x="587" y="511" fill="#94A3B8" font-size="10" text-anchor="middle">Top-3 injected at score ≥ 25</text>
 
         <!-- MCPs -->
         <rect x="702" y="424" width="190" height="100" rx="8" fill="#162440" stroke="#10B981" stroke-width="1.5"/>
-        <text x="797" y="448" fill="#34D399" font-size="13" font-weight="700" text-anchor="middle">MCP Servers (14+)</text>
+        <text x="797" y="448" fill="#34D399" font-size="13" font-weight="700" text-anchor="middle">MCP Servers (16+)</text>
         <text x="797" y="466" fill="#94A3B8" font-size="10" text-anchor="middle">Supabase ×2 · Slack · Apollo</text>
         <text x="797" y="481" fill="#94A3B8" font-size="10" text-anchor="middle">ZoomInfo · NPI · CMS Coverage</text>
         <text x="797" y="496" fill="#94A3B8" font-size="10" text-anchor="middle">MuleSoft · TraderMonty</text>
@@ -794,17 +867,20 @@
         <line x1="498" y1="160" x2="536" y2="160" stroke="#10B981" stroke-width="1.5" marker-end="url(#arrow2)"/>
 
         <!-- Scoring Engines -->
-        <rect x="536" y="60" width="155" height="200" rx="8" fill="#162440" stroke="#F59E0B" stroke-width="1.5"/>
-        <text x="613" y="84" fill="#FCD34D" font-size="12" font-weight="700" text-anchor="middle">Scoring Engines</text>
-        <text x="613" y="102" fill="#94A3B8" font-size="10" text-anchor="middle">TYS v7.4 — territory</text>
-        <text x="613" y="118" fill="#94A3B8" font-size="10" text-anchor="middle">CHPS v1.1 — CMS pain</text>
-        <text x="613" y="134" fill="#94A3B8" font-size="10" text-anchor="middle">BHPS v1 — behavioral health</text>
-        <text x="613" y="150" fill="#94A3B8" font-size="10" text-anchor="middle">PSPS v1.4 — pediatric</text>
-        <text x="613" y="166" fill="#94A3B8" font-size="10" text-anchor="middle">RMS v1 — rural/CAH</text>
-        <text x="613" y="182" fill="#94A3B8" font-size="10" text-anchor="middle">Golden Record v2 — dedup</text>
-        <text x="613" y="202" fill="#94A3B8" font-size="9" text-anchor="middle">Supabase pg functions</text>
-        <text x="613" y="216" fill="#94A3B8" font-size="9" text-anchor="middle">+ Python pipeline</text>
-        <text x="613" y="234" fill="#94A3B8" font-size="9" text-anchor="middle">Colab + GitHub Actions</text>
+        <rect x="536" y="40" width="155" height="240" rx="8" fill="#162440" stroke="#F59E0B" stroke-width="1.5"/>
+        <text x="613" y="62" fill="#FCD34D" font-size="12" font-weight="700" text-anchor="middle">Scoring + SSL v1</text>
+        <text x="613" y="80" fill="#94A3B8" font-size="10" text-anchor="middle">TYS v7.6 — territory</text>
+        <text x="613" y="96" fill="#94A3B8" font-size="10" text-anchor="middle">CHPS v1.1 — CMS pain</text>
+        <text x="613" y="112" fill="#94A3B8" font-size="10" text-anchor="middle">BHPS v1.0 — behavioral</text>
+        <text x="613" y="128" fill="#94A3B8" font-size="10" text-anchor="middle">PSPS v1.4 — pediatric</text>
+        <text x="613" y="144" fill="#94A3B8" font-size="10" text-anchor="middle">RMS v1 — rural/CAH</text>
+        <text x="613" y="160" fill="#94A3B8" font-size="10" text-anchor="middle">Golden Record v2 — dedup</text>
+        <text x="613" y="180" fill="#34D399" font-size="10" font-weight="700" text-anchor="middle">─── SSL v1 (NEW) ───</text>
+        <text x="613" y="196" fill="#94A3B8" font-size="10" text-anchor="middle">ICS classify</text>
+        <text x="613" y="212" fill="#94A3B8" font-size="10" text-anchor="middle">HRRP exposure</text>
+        <text x="613" y="228" fill="#94A3B8" font-size="10" text-anchor="middle">engagement gate</text>
+        <text x="613" y="252" fill="#94A3B8" font-size="9" text-anchor="middle">Postgres fns + Python</text>
+        <text x="613" y="266" fill="#94A3B8" font-size="9" text-anchor="middle">Colab + GitHub Actions</text>
 
         <!-- Arrow: Scoring → scoring table -->
         <line x1="691" y1="160" x2="730" y2="160" stroke="#10B981" stroke-width="1.5" marker-end="url(#arrow2)"/>
@@ -848,6 +924,7 @@
   <section id="tables">
     <h2><span class="num">4</span> Table Inventory — SmokinTerritory</h2>
     <p>All tables in the <code>cnplogkxbjecdeeritdl</code> project (us-west-2). Row counts are approximate; verify with <code>SELECT COUNT(*) FROM &lt;table&gt;</code> before querying large result sets.</p>
+    <div class="alert" style="margin-bottom:16px;"><strong>v2 scope note:</strong> This inventory covers SmokinTerritory only. WD tables are documented in <code>~/.claude/references/whiskey-down-cluster.md</code>. <strong>smokin-ops</strong> schema is TBD as of 2026-04-26 — only the <code>kb</code> observability schema is partially seeded (<code>ingested_files</code> · <code>queries</code> · <code>citations</code>). Inaugural smokin-ops migration will go through the staging-branches gate.</div>
 
     <h3>Core Account Data</h3>
     <table>
@@ -1050,11 +1127,11 @@
     <div class="engine-row">
       <div class="engine-header">
         <span class="engine-name">TYS — Territory Yield Score</span>
-        <span class="engine-version">v7.4</span>
+        <span class="engine-version">v7.6_threshold_recal</span> <span class="tag tag-green">NEW v3</span>
         <span class="engine-fn">score_territory_v7()</span>
         <span class="tag tag-blue">Primary Engine</span>
       </div>
-      <p style="margin-bottom:8px;">Commercial MuleSoft attractiveness across 4 pillars. Drives tier assignments and all territory prioritization. Max 65 pts.</p>
+      <p style="margin-bottom:8px;">Commercial MuleSoft attractiveness across 4 pillars. Drives tier assignments and all territory prioritization. Max 65 pts. v7.6 adds <code>ae_tier_override</code> path that wins over both active-rescore and inactive-zero-out branches.</p>
       <div class="col-list">
         <span class="col-pill">tys_composite_score</span>
         <span class="col-pill">tys_tier</span>
@@ -1079,6 +1156,7 @@
         <span class="engine-version">v1.1</span>
         <span class="engine-fn">score_cms_v1()</span>
         <span class="tag tag-orange">CMS Pain</span>
+        <span class="tag tag-gray">unchanged in v2</span>
       </div>
       <p style="margin-bottom:8px;">Regulatory stress vs peers across HRRP, HAC, HVBP, HCAHPS. ~160 CMS-eligible hospitals. 0–100 percentile scale.</p>
       <div class="col-list">
@@ -1093,11 +1171,11 @@
     <div class="engine-row">
       <div class="engine-header">
         <span class="engine-name">BHPS — Behavioral Health Propensity Score</span>
-        <span class="engine-version">v1</span>
+        <span class="engine-version">v1.0</span> <span class="tag tag-green">NEW v3 (reconciled to live)</span>
         <span class="engine-fn">score_behavioral_health_v1()</span>
         <span class="tag tag-purple">Behavioral Health</span>
       </div>
-      <p style="margin-bottom:8px;">High-propensity BH accounts. 21 accounts scored. Max 50 pts across 6 pillars (bhps_p1–p6).</p>
+      <p style="margin-bottom:8px;">High-propensity BH accounts. 21 accounts scored, 3 currently Tier-3. Live version literal is <code>bhps_v1.0</code> (v2 doc claimed v1.1 — reconciled to live DB 2026-05-08). Max 50 pts across 6 pillars (bhps_p1–p6).</p>
       <div class="col-list">
         <span class="col-pill">bhps_composite_score</span>
         <span class="col-pill">bhps_p1</span>
@@ -1172,6 +1250,23 @@
         <span class="col-pill">merge_type</span>
       </div>
     </div>
+
+    <!-- ─── NEW IN V2: Smokin Semantic Layer v1 ─── -->
+    <div class="engine-row" id="ssl" style="border:2px solid var(--green);background:rgba(16,185,129,0.04);">
+      <div class="engine-header">
+        <span class="engine-name">Smokin Semantic Layer v1 (= Feature Functions v1)</span>
+        <span class="engine-version">v1</span>
+        <span class="engine-fn">3 Postgres fns</span>
+        <span class="tag tag-green">NEW · 2026-04-25</span>
+      </div>
+      <p style="margin-bottom:8px;">Umbrella name for ST's deterministic decision-function layer. v1 scope = three Postgres functions. pgvector gate closed NO-GO 2026-05-06 — engine-folding deferred indefinitely; scoring engines remain independent. <code>deliverables.id=303</code>.</p>
+      <div class="col-list">
+        <span class="col-pill">classify_ics()</span>
+        <span class="col-pill">hrrp_exposure()</span>
+        <span class="col-pill">engagement_gate()</span>
+      </div>
+      <p style="margin-top:10px;font-size:12px;color:var(--muted);">Trigger phrase: <strong>"load feature functions v1"</strong> → <code>~/.claude/projects/C--Users-mbusa/memory/project_feature_functions_v1_20260425.md</code></p>
+    </div>
   </section>
 
   <!-- ─────────────────────────────────────────── -->
@@ -1181,37 +1276,61 @@
     <h2><span class="num">6</span> AI Infrastructure</h2>
     <p>The Claude Code AI layer is built from four components: enforcement hooks that physically gate bad actions, specialist agents that handle parallel workloads, skills that encode deep domain knowledge, and MCP servers that connect to every external system.</p>
 
-    <h3 id="hooks">Enforcement Hooks (18)</h3>
-    <p>Hooks run at <code>PreToolUse</code>, <code>PostToolUse</code>, <code>SessionStart</code>, and <code>SessionEnd</code>. They block patterns — not just advise against them. Registered in <code>~/.claude/settings.json</code>. Deployed via <code>make install</code> from <code>~/repos/claude-config/</code>.</p>
+    <h3 id="hooks">Enforcement Hooks (25) <span class="tag tag-green">NEW v3</span></h3>
+    <p>Hooks run at <code>PreToolUse</code>, <code>PostToolUse</code>, <code>SessionStart</code>, <code>SessionEnd</code>, and <code>UserPromptSubmit</code>. They block patterns — not just advise against them. Registered in <code>~/.claude/settings.json</code>. Deployed via <code>make install</code> from <code>~/repos/claude-config/</code>. <span class="tag tag-green">v3: 25-hook roster (was 19)</span></p>
 
     <div class="hook-list">
       <div class="hook-item">
         <div class="hook-name">plan-gate.sh</div>
-        <div class="hook-desc">Blocks all mutations (Edit/Write/Bash/MCP) while in Plan Mode. Prevents blocked-tool loops.</div>
+        <div class="hook-desc">Blocks all mutations (Edit/Write/Bash/MCP/Slack/Apollo writes/Mule deploys) while in Plan Mode.</div>
       </div>
       <div class="hook-item">
         <div class="hook-name">no-guess-gate.sh</div>
         <div class="hook-desc">Blocks Supabase/Vercel/edge-function mutations unless a prior read was logged via breadcrumb.</div>
       </div>
       <div class="hook-item">
+        <div class="hook-name">no-guess-breadcrumb.sh</div>
+        <div class="hook-desc">Companion to no-guess-gate. Stamps breadcrumb after any Supabase/Vercel read.</div>
+      </div>
+      <div class="hook-item">
         <div class="hook-name">exchange-first-gate.sh</div>
-        <div class="hook-desc">Blocks MuleSoft code creation without a prior Exchange search breadcrumb.</div>
+        <div class="hook-desc">Blocks MuleSoft code creation (create_mule_project / generate_mule_flow / generate_api_spec) without a prior Exchange search breadcrumb.</div>
+      </div>
+      <div class="hook-item">
+        <div class="hook-name">exchange-first-breadcrumb.sh</div>
+        <div class="hook-desc">Stamps breadcrumb after <code>mcp__mulesoft__search_asset</code> calls so the gate can authorize subsequent creation.</div>
       </div>
       <div class="hook-item">
         <div class="hook-name">obsolete-scoring-gate.sh</div>
-        <div class="hook-desc">Blocks deprecated scoring column names (v5.5.0 era). Pattern-matches on file content at PreToolUse.</div>
+        <div class="hook-desc">Blocks deprecated scoring column names (v5.5.0 era — <code>composite_score_v4</code>, <code>v6_*</code>, etc.). Pattern-matches on file content at PreToolUse.</div>
+      </div>
+      <div class="hook-item">
+        <div class="hook-name">tier-format-gate.sh</div>
+        <div class="hook-desc">Blocks non-canonical tier format (A/B/C/D legacy) on Supabase mutations. Enforces T1/T2/T3/T4.</div>
       </div>
       <div class="hook-item">
         <div class="hook-name">delivery-checklist-gate.sh</div>
-        <div class="hook-desc">Breadcrumb-based gate. Blocks declaring "done" without Supabase deliverables log. Fail-open.</div>
+        <div class="hook-desc">Breadcrumb-based. Blocks declaring "done" without Supabase deliverables log. Fail-open.</div>
+      </div>
+      <div class="hook-item">
+        <div class="hook-name">claim-evidence-gate.sh <span class="tag tag-green" style="font-size:9px;">NEW</span></div>
+        <div class="hook-desc">PostToolUse. Watches assertion-shaped output ("X is wired", "data shows Y") for missing evidence (file Read, end-to-end run, code-path trace). Pipeline-F response to Gate 4.</div>
+      </div>
+      <div class="hook-item">
+        <div class="hook-name">settings-xml-guard.sh</div>
+        <div class="hook-desc">PreToolUse. Blocks <code>Write</code> on <code>~/.m2/settings.xml</code>. Edit + backup only.</div>
+      </div>
+      <div class="hook-item">
+        <div class="hook-name">workspace-id-setter.sh <span class="tag tag-green" style="font-size:9px;">NEW</span></div>
+        <div class="hook-desc">Sets <code>app.workspace_id</code> on every Supabase session — closes WS1-P2 risk (per harness-risks-3-4 note).</div>
+      </div>
+      <div class="hook-item">
+        <div class="hook-name">response-length-monitor.sh <span class="tag tag-green" style="font-size:9px;">NEW</span></div>
+        <div class="hook-desc">PostToolUse passive monitor. Part of AI OS Phase 1 token efficiency stack.</div>
       </div>
       <div class="hook-item">
         <div class="hook-name">config-sync.sh</div>
-        <div class="hook-desc">Auto-mirrors skill/memory edits to ~/repos/claude-config GitHub repo at PostToolUse.</div>
-      </div>
-      <div class="hook-item">
-        <div class="hook-name">pipeline-f-weekly.sh</div>
-        <div class="hook-desc">Sunday 22:00 cron. Self-learning pattern detection across session history (115 patterns, 7 rules).</div>
+        <div class="hook-desc">PostToolUse. Auto-mirrors skill / memory / hook edits to <code>~/repos/claude-config</code> GitHub repo.</div>
       </div>
       <div class="hook-item">
         <div class="hook-name">config-sync-cron-win11.sh</div>
@@ -1219,22 +1338,26 @@
       </div>
       <div class="hook-item">
         <div class="hook-name">skill-router-gate.sh</div>
-        <div class="hook-desc">At UserPromptSubmit: scores catalog.json against prompt, injects top-3 skills when score ≥ 25.</div>
+        <div class="hook-desc">UserPromptSubmit. Scores <code>catalog.json</code> against prompt, injects top-3 skills when score ≥ 25 + at least one trigger-phrase hit.</div>
       </div>
       <div class="hook-item">
-        <div class="hook-name">no-guess-breadcrumb.sh</div>
-        <div class="hook-desc">Companion to no-guess-gate. Stamps breadcrumb after any Supabase/Vercel read.</div>
+        <div class="hook-name">catalog-freshness.sh <span class="tag tag-green" style="font-size:9px;">NEW</span></div>
+        <div class="hook-desc">SessionStart. Confirms <code>catalog.json</code> is fresh; signals if rebuild needed.</div>
       </div>
       <div class="hook-item">
         <div class="hook-name">pipeline-f-status.sh</div>
-        <div class="hook-desc">SessionStart: surfaces Pipeline-F run status, recurring patterns, and consolidation candidates.</div>
+        <div class="hook-desc">SessionStart. Surfaces Pipeline-F run status, recurring patterns, and consolidation candidates.</div>
+      </div>
+      <div class="hook-item">
+        <div class="hook-name">pipeline-f-weekly.sh</div>
+        <div class="hook-desc">Sunday 22:00 cron. Self-learning pattern detection across session history. Latest run: 7 rules · 115 patterns · 3 recurring.</div>
       </div>
       <div class="hook-item">
         <div class="hook-name">pipeline-f-mirror.sh</div>
-        <div class="hook-desc">Mirrors pipeline-f output to ~/repos/claude-config/pipeline-f/ for cross-device access.</div>
+        <div class="hook-desc">SessionEnd. Mirrors pipeline-f output to <code>~/repos/claude-config/pipeline-f/</code> for cross-device access.</div>
       </div>
     </div>
-    <p style="margin-top:8px;font-size:12px;color:var(--muted);">+ 6 additional hooks (session-start orientation queries, knowledge export triggers, model dispatch guards)</p>
+    <p style="margin-top:8px;font-size:12px;color:var(--muted);">Plus a Bash safety shim invoked at PreToolUse: <code>node ~/.claude/safety-net/dist/bin/cc-safety-net.js --claude-code</code>. Not counted in the 19 .sh files.</p>
 
     <h3 id="agents">Specialist Agents (5)</h3>
     <p>Agents are dispatched via the <code>Agent</code> tool and run in parallel when independent. Model selection is cost-disciplined: Haiku for narrow/read-only tasks, Sonnet for analysis requiring reasoning depth.</p>
@@ -1267,24 +1390,31 @@
       </div>
     </div>
 
-    <h3>Skills (73+ domains)</h3>
-    <p>Skills encode deep domain knowledge and are routed automatically by <code>skill-router-gate.sh</code> via <code>~/.claude/references/catalog/catalog.json</code>. Key skill domains:</p>
+    <h3>Skills (1,384 cataloged)</h3>
+    <p>The hand-maintained skill router was replaced 2026-04-14 by a filesystem-walked catalog. <strong>Single source of truth:</strong> <code>~/.claude/references/catalog/catalog.md</code>, generated by <code>scripts/build-catalog.py</code> from every <code>SKILL.md</code> on disk — 81 custom skills + plugin-marketplace skills (document-skills, superpowers, codex, figma, fhir-developer, clinical-trial-protocol, vercel, agent-sdk-dev, others) totalling 1,384. <span class="tag tag-green">v3: custom count 89 → 81 (consolidation)</span></p>
+    <p>Routing: <code>skill-router-gate.sh</code> at <code>UserPromptSubmit</code> scores the catalog against the prompt (keyword + structured <code>trigger_phrases</code>) and injects top-3 as a system-reminder block when score ≥ 25 AND at least one trigger-hit. Soft advise — Claude must acknowledge or justify skipping before acting. Fail-open on any error.</p>
+    <p style="margin-top:8px;">Key custom-skill domains (representative, not exhaustive):</p>
     <div style="display:flex;flex-wrap:wrap;gap:8px;margin:12px 0;">
       <span class="tag tag-blue">solution-architect</span>
       <span class="tag tag-blue">mulesoft-developer</span>
       <span class="tag tag-blue">cto-lens</span>
       <span class="tag tag-orange">campaign-builder</span>
       <span class="tag tag-orange">scoring-engine</span>
-      <span class="tag tag-green">signal-brief</span>
-      <span class="tag tag-green">territory-intel</span>
+      <span class="tag tag-orange">scoring-validator</span>
+      <span class="tag tag-green">signal-scout</span>
+      <span class="tag tag-green">account-research</span>
+      <span class="tag tag-green">pov-builder</span>
       <span class="tag tag-purple">notebooklm</span>
       <span class="tag tag-purple">design-doc</span>
+      <span class="tag tag-purple">clawguard</span>
       <span class="tag tag-gray">security-review</span>
       <span class="tag tag-gray">proposal-deploy</span>
       <span class="tag tag-gray">wd-trading (20+ skills)</span>
+      <span class="tag tag-gray">hc-* (6 healthcare API patterns)</span>
     </div>
+    <p style="margin-top:8px;font-size:12px;color:var(--muted);">CLI: <code>python ~/repos/claude-config/bin/skill-find "task description"</code> for human-driven matching.</p>
 
-    <h3 id="mcps">MCP Servers (14+)</h3>
+    <h3 id="mcps">MCP Servers (16+)</h3>
     <div class="mcp-grid">
       <div class="mcp-item">
         <div class="mcp-name">Supabase (SmokinTerritory)</div>
@@ -1293,6 +1423,10 @@
       <div class="mcp-item">
         <div class="mcp-name">Supabase (Whiskey Down)</div>
         <div class="mcp-desc">wwmhnjfmrbqemeygygcn · Isolated trading project</div>
+      </div>
+      <div class="mcp-item" style="border-color:rgba(245,158,11,0.4);">
+        <div class="mcp-name">Supabase (smokin-ops) <span class="tag tag-green" style="font-size:9px;">NEW v2</span></div>
+        <div class="mcp-desc">xuvdcygqyuajtlpavafr · SoR / observability · schema TBD</div>
       </div>
       <div class="mcp-item">
         <div class="mcp-name">Slack</div>
@@ -1342,6 +1476,22 @@
         <div class="mcp-name">Google Drive</div>
         <div class="mcp-desc">Deliverable storage, account folder sync</div>
       </div>
+      <div class="mcp-item" style="border-color:rgba(16,185,129,0.4);">
+        <div class="mcp-name">Claude Preview <span class="tag tag-green" style="font-size:9px;">NEW v2</span></div>
+        <div class="mcp-desc">Preview / staging integration for in-flight Claude builds</div>
+      </div>
+      <div class="mcp-item" style="border-color:rgba(16,185,129,0.4);">
+        <div class="mcp-name">scheduled-tasks <span class="tag tag-green" style="font-size:9px;">NEW v2</span></div>
+        <div class="mcp-desc">Remote agent / cron scheduling (e.g., 2026-05-03 verification fire)</div>
+      </div>
+      <div class="mcp-item" style="border-color:rgba(16,185,129,0.4);">
+        <div class="mcp-name">Control Chrome <span class="tag tag-green" style="font-size:9px;">NEW v2</span></div>
+        <div class="mcp-desc">Browser automation for NotebookLM / portal flows</div>
+      </div>
+      <div class="mcp-item" style="border-color:rgba(16,185,129,0.4);">
+        <div class="mcp-name">mcp-registry <span class="tag tag-green" style="font-size:9px;">NEW v2</span></div>
+        <div class="mcp-desc">Registry / discovery service for MCP servers</div>
+      </div>
     </div>
   </section>
 
@@ -1350,20 +1500,20 @@
   <!-- ─────────────────────────────────────────── -->
   <section id="boundaries">
     <h2><span class="num">7</span> System Boundaries</h2>
-    <p>Two Supabase projects serve entirely different workloads with a hard isolation rule enforced at both the code and infrastructure level. No cross-project SQL joins ever. Data moves at the application layer only, with explicit approval.</p>
+    <p>Three Supabase projects serve entirely different workloads with a hard isolation rule enforced at both the code and infrastructure level. No cross-project SQL joins ever. Data moves at the application layer only, with explicit approval. <span class="tag tag-green">v2: smokin-ops added 2026-04-26</span></p>
 
-    <div class="isolation-box">
+    <div class="isolation-three">
       <div class="project-card st">
         <h3>SmokinTerritory</h3>
         <table style="font-size:12px;">
           <tbody>
-            <tr><td class="muted" style="width:120px;padding:5px 8px;">Project ID</td><td style="padding:5px 8px;"><code>cnplogkxbjecdeeritdl</code></td></tr>
+            <tr><td class="muted" style="width:110px;padding:5px 8px;">Project ID</td><td style="padding:5px 8px;"><code style="font-size:10px;">cnplogkxbjecdeeritdl</code></td></tr>
             <tr><td class="muted" style="padding:5px 8px;">Region</td><td style="padding:5px 8px;">us-west-2</td></tr>
             <tr><td class="muted" style="padding:5px 8px;">Env Vars</td><td style="padding:5px 8px;"><code>SUPABASE_URL</code>, <code>SUPABASE_KEY</code></td></tr>
-            <tr><td class="muted" style="padding:5px 8px;">Primary Use</td><td style="padding:5px 8px;">Territory CRM, scoring, campaigns, proposals, contacts</td></tr>
+            <tr><td class="muted" style="padding:5px 8px;">Primary Use</td><td style="padding:5px 8px;">CRM · scoring · campaigns · proposals · SSL v1</td></tr>
             <tr><td class="muted" style="padding:5px 8px;">Accounts</td><td style="padding:5px 8px;">865 (469 parent orgs)</td></tr>
-            <tr><td class="muted" style="padding:5px 8px;">DDL method</td><td style="padding:5px 8px;">execute_sql or apply_migration</td></tr>
-            <tr><td class="muted" style="padding:5px 8px;">Deliverables</td><td style="padding:5px 8px;">ST work only → ST deliverables table</td></tr>
+            <tr><td class="muted" style="padding:5px 8px;">Migrations</td><td style="padding:5px 8px;">270 squashed → 1 baseline (PR #6)</td></tr>
+            <tr><td class="muted" style="padding:5px 8px;">Deliverables</td><td style="padding:5px 8px;">ST work only → ST deliverables</td></tr>
             <tr><td class="muted" style="padding:5px 8px;">Frontend</td><td style="padding:5px 8px;">smokin-territory.vercel.app · Plotly.js v2.27.0</td></tr>
           </tbody>
         </table>
@@ -1373,26 +1523,56 @@
         <h3>Whiskey Down (Isolated)</h3>
         <table style="font-size:12px;">
           <tbody>
-            <tr><td class="muted" style="width:120px;padding:5px 8px;">Project ID</td><td style="padding:5px 8px;"><code>wwmhnjfmrbqemeygygcn</code></td></tr>
+            <tr><td class="muted" style="width:110px;padding:5px 8px;">Project ID</td><td style="padding:5px 8px;"><code style="font-size:10px;">wwmhnjfmrbqemeygygcn</code></td></tr>
             <tr><td class="muted" style="padding:5px 8px;">Region</td><td style="padding:5px 8px;">us-west-1</td></tr>
             <tr><td class="muted" style="padding:5px 8px;">Env Vars</td><td style="padding:5px 8px;"><code>WD_SUPABASE_URL</code>, <code>WD_SUPABASE_KEY</code></td></tr>
-            <tr><td class="muted" style="padding:5px 8px;">Primary Use</td><td style="padding:5px 8px;">Trading, backtests, candidate store, ideas</td></tr>
-            <tr><td class="muted" style="padding:5px 8px;">Key Tables</td><td style="padding:5px 8px;">backtests, trades, candidates, ideas, published_ideas_store</td></tr>
-            <tr><td class="muted" style="padding:5px 8px;">DDL method</td><td style="padding:5px 8px;">apply_migration ONLY (execute_sql = read/DML)</td></tr>
-            <tr><td class="muted" style="padding:5px 8px;">Deliverables</td><td style="padding:5px 8px;">WD work only → WD deliverables table</td></tr>
-            <tr><td class="muted" style="padding:5px 8px;">Special rule</td><td style="padding:5px 8px;">published_ideas_store is INSERT-only (freeze_role, RLS denies UPDATE/DELETE)</td></tr>
+            <tr><td class="muted" style="padding:5px 8px;">Primary Use</td><td style="padding:5px 8px;">Trading · backtests · candidates · ideas</td></tr>
+            <tr><td class="muted" style="padding:5px 8px;">DDL method</td><td style="padding:5px 8px;">apply_migration ONLY</td></tr>
+            <tr><td class="muted" style="padding:5px 8px;">Migrations</td><td style="padding:5px 8px;">26 individual files (rebuild-complete)</td></tr>
+            <tr><td class="muted" style="padding:5px 8px;">Deliverables</td><td style="padding:5px 8px;">WD work only → WD deliverables</td></tr>
+            <tr><td class="muted" style="padding:5px 8px;">Special rule</td><td style="padding:5px 8px;">published_ideas_store INSERT-only via freeze_role</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="project-card so">
+        <h3>smokin-ops <span class="tag tag-green" style="font-size:10px;">NEW v2</span></h3>
+        <table style="font-size:12px;">
+          <tbody>
+            <tr><td class="muted" style="width:110px;padding:5px 8px;">Project ID</td><td style="padding:5px 8px;"><code style="font-size:10px;">xuvdcygqyuajtlpavafr</code></td></tr>
+            <tr><td class="muted" style="padding:5px 8px;">Repo</td><td style="padding:5px 8px;"><code>m9751/smokin-ops</code> (private)</td></tr>
+            <tr><td class="muted" style="padding:5px 8px;">Primary Use</td><td style="padding:5px 8px;">SoR · runs log · audit log · ai-ops · observability</td></tr>
+            <tr><td class="muted" style="padding:5px 8px;">Schema</td><td style="padding:5px 8px;color:var(--orange);"><strong>TBD</strong> as of 2026-04-26</td></tr>
+            <tr><td class="muted" style="padding:5px 8px;">Migrations</td><td style="padding:5px 8px;">Empty · branching wired before schema design</td></tr>
+            <tr><td class="muted" style="padding:5px 8px;">Extensions</td><td style="padding:5px 8px;">pgvector installed; zero vector cols yet</td></tr>
+            <tr><td class="muted" style="padding:5px 8px;">Deliverables</td><td style="padding:5px 8px;">Logged on ST until smokin-ops gets its own table</td></tr>
+            <tr><td class="muted" style="padding:5px 8px;">kb schema</td><td style="padding:5px 8px;">ingested_files · queries · citations</td></tr>
           </tbody>
         </table>
       </div>
     </div>
 
+    <h3 style="margin-top:20px;">Staging Branches Workflow <span class="tag tag-green" style="font-size:10px;">NEW v2 · 2026-04-26</span></h3>
+    <div class="card" style="margin-top:8px;">
+      <p style="margin-bottom:10px;">Schema changes flow through PR review with auto-spun Supabase preview branches that catch bad migrations before production. Identical workflow across all 3 projects.</p>
+      <ol style="color:var(--muted);font-size:13px;padding-left:24px;">
+        <li><strong>Local:</strong> <code>cd ~/repos/&lt;repo&gt; &amp;&amp; supabase migration new &lt;name&gt;</code> — edit the new file in <code>supabase/migrations/</code>.</li>
+        <li><strong>Push to topic branch + open PR</strong> against <code>main</code>.</li>
+        <li><strong>Supabase auto-creates a preview branch</strong>, applies all migrations, posts the <code>Supabase Preview</code> status check on the PR.</li>
+        <li><strong>Required check enforces it:</strong> <code>main</code> ruleset requires Supabase Preview + linear history + squash/rebase. Failed migration = <code>mergeStateStatus: BLOCKED</code>.</li>
+        <li><strong>Merge to main</strong> triggers production deployment; new migration recorded in <code>schema_migrations</code>.</li>
+      </ol>
+      <p style="margin-top:8px;font-size:12px;">Trigger phrases — ST + WD: <strong>"resume staging branches"</strong> · smokin-ops: <strong>"resume staging branches smokin-ops"</strong>. Verified end-to-end 2026-04-26 (no-op PR PASS, broken-migration PR BLOCKED on all three).</p>
+    </div>
+
     <div class="boundary-rule">
       <strong>HARD RULES — Never violate:</strong><br><br>
-      1. <strong>Never cross the streams.</strong> SmokinTerritory tables must never be queried from a Whiskey Down task and vice versa.<br><br>
+      1. <strong>Never cross the streams.</strong> ST / WD / smokin-ops tables are never queried across project boundaries.<br><br>
       2. <strong>No cross-project SQL joins.</strong> Zero dblink, zero foreign data wrapper, zero table references across project IDs in any SQL statement.<br><br>
-      3. <strong>WD_ prefix enforces project routing.</strong> Any code referencing <code>WD_SUPABASE_URL</code> or <code>WD_SUPABASE_KEY</code> operates on Whiskey Down ONLY.<br><br>
-      4. <strong>Never dual-write.</strong> If a WD build row is found on SmokinTerritory (legacy error), migrate it to the WD project then DELETE the SmokinTerritory row.<br><br>
-      5. <strong>Ambiguous task?</strong> ASK Michael which project — never guess.
+      3. <strong>Routing is by env vars + Layer 0 vocabulary.</strong> WD = <code>WD_SUPABASE_URL</code>; smokin-ops vocabulary = SoR / runs log / audit log / observability / ai-ops. Pass <code>project_id</code> explicitly on every Supabase MCP call.<br><br>
+      4. <strong>Never dual-write deliverables.</strong> Each project has its own <code>deliverables</code> table. WD builds → WD project. ST builds → ST project. (smokin-ops logs on ST until it has a table.) If a row is found on the wrong project, migrate it then DELETE the original.<br><br>
+      5. <strong>DDL via PR only.</strong> No live <code>apply_migration</code> on production projects — go through the staging-branches workflow.<br><br>
+      6. <strong>Ambiguous task?</strong> ASK Michael which project — never guess.
     </div>
 
     <h3 style="margin-top: 28px;">Smokin Decision — Separate App Boundary</h3>
@@ -1403,7 +1583,8 @@
           <tr><td class="muted" style="width:140px;padding:6px 10px;">Frontend</td><td style="padding:6px 10px;">https://smokin-decision.vercel.app</td></tr>
           <tr><td class="muted" style="padding:6px 10px;">Backend</td><td style="padding:6px 10px;">https://smokin-decision-production.up.railway.app</td></tr>
           <tr><td class="muted" style="padding:6px 10px;">Features</td><td style="padding:6px 10px;">Verdict engine · Blind spot detector (P1J) · Steelman button (P1K) · Shareable /verdict/[id] routes (P1I)</td></tr>
-          <tr><td class="muted" style="padding:6px 10px;">Status</td><td style="padding:6px 10px;color:var(--green);">LIVE — deliverables.id=286</td></tr>
+          <tr><td class="muted" style="padding:6px 10px;">v2 updates</td><td style="padding:6px 10px;color:var(--green);">All 5 v2 phases shipped + UX + dashboard crash fix (2026-04-26). Prompt caching shipped 2026-04-24 (no-tools verified; with-tools may have ~25% penalty pending CSV pull).</td></tr>
+          <tr><td class="muted" style="padding:6px 10px;">Status</td><td style="padding:6px 10px;color:var(--green);">LIVE — <code>deliverables.id=286</code></td></tr>
         </tbody>
       </table>
     </div>
@@ -1418,7 +1599,8 @@
   </section>
 
   <div style="padding: 32px 0 48px; border-top: 1px solid var(--border); margin-top: 16px;">
-    <p style="font-size:12px;">Generated 2026-04-22 · Internal reference · SmokinTerritory v2026-04-22 · No engagement beacon (internal use only)</p>
+    <p style="font-size:12px;">Generated 2026-05-08 · Internal reference · SmokinTerritory Architecture <strong>v3</strong> · supersedes v2 (2026-04-26) · No engagement beacon (internal use only)</p>
+    <p style="font-size:11px;color:var(--muted);margin-top:6px;">Source: live <code>~/.claude/agents/</code> · <code>~/.claude/hooks/</code> · <code>~/.claude/settings.json</code> · MEMORY.md milestones · CLAUDE.md routing tables · Convergence Plan (deliverables.id=317) · pgvector gate state (deliverables.id=319, verdict NO-GO, closed 2026-05-06). Original v1 at <code>smokin-territory-architecture.html</code>, untouched.</p>
   </div>
 
 </main>
