@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>SmokinTerritory — Architecture Reference v3</title>
+<title>SmokinTerritory — Architecture Reference v3.1</title>
 <style>
   :root {
     --bg: #0A1628;
@@ -535,7 +535,8 @@
   </ul>
   <div class="nav-section">Quick Ref</div>
   <ul>
-    <li><a href="#hooks">Hooks (25)</a></li>
+    <li><a href="#hooks">Hooks (20)</a></li>
+    <li><a href="#tp-v2">TP v2 (Thinking Partner)</a></li>
     <li><a href="#agents">Agents (5)</a></li>
     <li><a href="#mcps">MCP Servers (16+)</a></li>
     <li><a href="#ssl">Smokin Semantic Layer v1</a></li>
@@ -548,8 +549,8 @@
     <h1>SmokinTerritory Architecture Reference</h1>
     <div class="meta">
       <span class="badge">INTERNAL</span>
-      <span class="badge" style="color:var(--green);border-color:rgba(16,185,129,0.4);">v3 · 2026-05-08</span>
-      <span class="badge" style="color:var(--muted);">supersedes v2 · 2026-04-26</span>
+      <span class="badge" style="color:var(--green);border-color:rgba(16,185,129,0.4);">v3.1 · 2026-05-08</span>
+      <span class="badge" style="color:var(--muted);">supersedes v3 (same day) · v2 · 2026-04-26</span>
       <span style="color:var(--muted)">Michael Busacca · Enterprise AE, MuleSoft Healthcare · Salesforce</span>
     </div>
   </div>
@@ -558,16 +559,21 @@
   <!-- v3 CHANGELOG BAND                           -->
   <!-- ─────────────────────────────────────────── -->
   <div class="changelog">
-    <div class="cl-title">What's new since v2 (2026-04-26 → 2026-05-08)</div>
+    <div class="cl-title">What's new in v3.1 (2026-05-08 same-day refresh — accuracy patch)</div>
     <ul>
-      <li><strong>Δ pgvector gate: <span class="delta">NO-GO (FAIL)</span></strong> — verified MOOT 2026-05-07. Original $20–25/mo Qdrant cost premise was wrong (actual $0/mo on Vectorize/Hindsight). Migration would have <em>added</em> $8–15/mo. Confidence HIGH. Source: <code>deliverables.id=319</code> (drafted 2026-04-26, Phase 7 SPOF neutralized 9 days early). Qdrant stays.</li>
-      <li><strong>Δ TYS scoring engine: <span class="delta">v7.4 → v7.6_threshold_recal</span></strong> — adds <code>ae_tier_override</code> path that wins over both active-rescore and inactive-zero-out branches. Threshold recalibration in tier band cutoffs.</li>
-      <li><strong>+ Convergence Plan closed</strong> — all 9 phases + Phase 0/B/C done 2026-04-26 evening. Phase 7 formally closed 2026-05-06. Commitment A (Qdrant→pgvector swap-readiness) <em>dropped</em> from architectural sub-track.</li>
-      <li><strong>Δ Hooks: 19 → 25.</strong> +6 hooks added since v2 (2026-04-26 → 2026-05-08). Includes <code>source-truth-write-gate</code>, <code>source-truth-declare</code>, and others. <span class="delta">local probe: hooks=25</span></li>
-      <li><strong>Δ Custom skills: 89 → 81.</strong> Net −8 from consolidation. Catalog total (1,384) unchanged — plugin marketplace skills unaffected. <span class="delta">local probe: skills=81</span></li>
-      <li><strong>+ Token-burn cleanup</strong> (2026-05-07, claude-config <code>35c7432</code>) — removed <code>rules/archived/</code> subtree + 6 Pipeline-F stubs. Net auto-load reduction ~10.9K tokens/turn.</li>
-      <li><strong>+ SSL / Feature Functions confirmed:</strong> 3 deterministic Postgres functions — <code>classify_ics_signal_v1</code>, <code>get_engagement_gate_v1</code>, <code>get_hrrp_exposure_v1</code>. No new SSL fns since 2026-04-25.</li>
-      <li><strong>+ smokin-ops stable</strong> — Supabase org RealFishTaco (us-west-1, PG 17.6.1.105, ~$10/mo). KB pipeline: 15,267 pts across 4 collections. Cross-project refs by string ID only.</li>
+      <li><strong>+ TP v2 (Thinking Partner) shipped</strong> — Builds #1–#4 live on smokin-ops <code>tp</code> schema: <code>tp.decisions</code>, <code>tp.decision_transitions</code>, <code>tp.feedback_polls</code>. Slash commands: <code>/decide</code> · <code>/advance</code> · <code>/advance-finish</code> · <code>/challenge</code> · <code>/challenge-finish</code> · <code>/tp-feedback-summary</code>. Adversarial Judge wired via <code>POST /debate</code> on Smokin Decision backend.</li>
+      <li><strong>+ PM instrumentation Phase 1 shipped</strong> (2026-05-03) — <code>build.pm_invocations</code> + <code>build.pm_mode_transitions</code> on smokin-ops. Open + close + first transition logged on every <code>/pm</code> dispatch. Phase 2 (per-mode model routing) parked until 5 baseline invocations.</li>
+      <li><strong>+ WD blotter parser pipeline</strong> (2026-05-04) — <code>usdcad_blotter_trades</code> long-format sibling table on Whiskey Down. Iter 2 paused at 145 rows / 24 days / 113 unparsed pending row-mapping + aggressor/counterparty schema-orientation decisions.</li>
+      <li><strong>Δ Hook count corrected: 25 → <span class="delta">20</span></strong> — v3 over-counted. Live <code>~/.claude/hooks/*.sh</code> = 20.</li>
+      <li><strong>+ TP v2 daily feedback poll active</strong> — SessionStart hook <code>tp-feedback-poll.sh</code> fires once/day with per-decision aging Q1 + system feedback Q2. 4-day window then operator decides cadence.</li>
+    </ul>
+    <div class="cl-title" style="margin-top:18px;">Earlier — v2 → v3 (2026-04-26 → 2026-05-08)</div>
+    <ul>
+      <li><strong>Δ pgvector gate: <span class="delta">NO-GO (FAIL)</span></strong> — verified MOOT 2026-05-07. Original $20–25/mo Qdrant cost premise was wrong (actual $0/mo on Vectorize/Hindsight). Migration would have <em>added</em> $8–15/mo. Source: <code>deliverables.id=319</code>. Qdrant stays.</li>
+      <li><strong>Δ TYS scoring engine: <span class="delta">v7.4 → v7.6_threshold_recal</span></strong> — adds <code>ae_tier_override</code> path. Threshold recalibration in tier band cutoffs.</li>
+      <li><strong>+ Convergence Plan closed</strong> — 9 phases + Phase 0/B/C done 2026-04-26. Phase 7 formally closed 2026-05-06.</li>
+      <li><strong>Δ Custom skills: 89 → 81.</strong> Net −8 from consolidation. Catalog total (1,384) unchanged.</li>
+      <li><strong>+ smokin-ops stable</strong> — Supabase org RealFishTaco. KB pipeline: 15,267 pts across 4 collections.</li>
     </ul>
   </div>
 
@@ -577,7 +583,7 @@
   <section id="overview">
     <h2><span class="num">1</span> Architecture Overview</h2>
 
-    <p>SmokinTerritory is a territory intelligence platform built to surface the right healthcare accounts at the right time for MuleSoft pipeline generation. It combines a Supabase PostgreSQL data warehouse (865 accounts, 469 unique parent organizations), a Vercel-hosted dashboard, GitHub Actions signal pipelines, and a Claude Code AI layer with 25 enforcement hooks, 5 specialist agents, 1,384 cataloged skills, and 16+ MCP server connections — all coordinated to reduce pipeline research from hours to minutes.</p>
+    <p>SmokinTerritory is a territory intelligence platform built to surface the right healthcare accounts at the right time for MuleSoft pipeline generation. It combines a Supabase PostgreSQL data warehouse (865 accounts, 469 unique parent organizations), a Vercel-hosted dashboard, GitHub Actions signal pipelines, and a Claude Code AI layer with 20 enforcement hooks, 5 specialist agents, 1,384 cataloged skills, and 16+ MCP server connections — all coordinated to reduce pipeline research from hours to minutes.</p>
 
     <p>The architecture has three layers: a <strong>compute layer</strong> (Vercel for frontend/APIs, GitHub Actions for pipeline orchestration, Railway for persistent services), a <strong>data layer</strong> (three Supabase projects for structured CRM/trading/observability data, Qdrant for vector search, Hindsight for cross-session AI memory), and an <strong>AI infrastructure layer</strong> (Claude Code orchestrating specialized agents via hooks, skills, and MCP tools). The second Supabase project (<strong>Whiskey Down</strong>) handles trading/backtesting in isolation; the third (<strong>smokin-ops</strong>, schema TBD) is the system-of-record for runs/audit/observability. All three sit behind a hard zero-cross-join boundary and share a unified PR-gated migration workflow.</p>
 
@@ -601,7 +607,7 @@
       </div>
       <div class="card-sm">
         <div class="label">AI Hooks</div>
-        <div class="value">19</div>
+        <div class="value">20</div>
         <div class="sub">Enforcement gates at PreToolUse / PostToolUse / Session</div>
       </div>
       <div class="card-sm">
@@ -756,7 +762,7 @@
         <!-- AI LAYER BOXES -->
         <!-- Hooks -->
         <rect x="72" y="424" width="190" height="100" rx="8" fill="#162440" stroke="#EF4444" stroke-width="1.5"/>
-        <text x="167" y="448" fill="#F87171" font-size="13" font-weight="700" text-anchor="middle">Hooks (25)</text>
+        <text x="167" y="448" fill="#F87171" font-size="13" font-weight="700" text-anchor="middle">Hooks (20)</text>
         <text x="167" y="466" fill="#94A3B8" font-size="10" text-anchor="middle">Enforcement gates</text>
         <text x="167" y="481" fill="#94A3B8" font-size="10" text-anchor="middle">PreToolUse · PostToolUse</text>
         <text x="167" y="496" fill="#94A3B8" font-size="10" text-anchor="middle">SessionStart · SessionEnd</text>
@@ -1276,8 +1282,8 @@
     <h2><span class="num">6</span> AI Infrastructure</h2>
     <p>The Claude Code AI layer is built from four components: enforcement hooks that physically gate bad actions, specialist agents that handle parallel workloads, skills that encode deep domain knowledge, and MCP servers that connect to every external system.</p>
 
-    <h3 id="hooks">Enforcement Hooks (25) <span class="tag tag-green">NEW v3</span></h3>
-    <p>Hooks run at <code>PreToolUse</code>, <code>PostToolUse</code>, <code>SessionStart</code>, <code>SessionEnd</code>, and <code>UserPromptSubmit</code>. They block patterns — not just advise against them. Registered in <code>~/.claude/settings.json</code>. Deployed via <code>make install</code> from <code>~/repos/claude-config/</code>. <span class="tag tag-green">v3: 25-hook roster (was 19)</span></p>
+    <h3 id="hooks">Enforcement Hooks (20) <span class="tag tag-green">v3.1 corrected</span></h3>
+    <p>Hooks run at <code>PreToolUse</code>, <code>PostToolUse</code>, <code>SessionStart</code>, <code>SessionEnd</code>, and <code>UserPromptSubmit</code>. They block patterns — not just advise against them. Registered in <code>~/.claude/settings.json</code>. Deployed via <code>make install</code> from <code>~/repos/claude-config/</code>. <span class="tag tag-green">v3.1: live count = 20 (verified from disk 2026-05-08)</span></p>
 
     <div class="hook-list">
       <div class="hook-item">
@@ -1542,11 +1548,14 @@
             <tr><td class="muted" style="width:110px;padding:5px 8px;">Project ID</td><td style="padding:5px 8px;"><code style="font-size:10px;">xuvdcygqyuajtlpavafr</code></td></tr>
             <tr><td class="muted" style="padding:5px 8px;">Repo</td><td style="padding:5px 8px;"><code>m9751/smokin-ops</code> (private)</td></tr>
             <tr><td class="muted" style="padding:5px 8px;">Primary Use</td><td style="padding:5px 8px;">SoR · runs log · audit log · ai-ops · observability</td></tr>
-            <tr><td class="muted" style="padding:5px 8px;">Schema</td><td style="padding:5px 8px;color:var(--orange);"><strong>TBD</strong> as of 2026-04-26</td></tr>
-            <tr><td class="muted" style="padding:5px 8px;">Migrations</td><td style="padding:5px 8px;">Empty · branching wired before schema design</td></tr>
+            <tr><td class="muted" style="padding:5px 8px;">Schemas</td><td style="padding:5px 8px;color:var(--green);"><strong>kb · runs · audit · telemetry · tp · build</strong> <span class="tag tag-green" style="font-size:9px;">v3.1</span></td></tr>
+            <tr><td class="muted" style="padding:5px 8px;">Migrations</td><td style="padding:5px 8px;">Live · PR-gated via Supabase Branching ruleset (drift incident 2026-05-02 recovered via PR #10)</td></tr>
             <tr><td class="muted" style="padding:5px 8px;">Extensions</td><td style="padding:5px 8px;">pgvector installed; zero vector cols yet</td></tr>
-            <tr><td class="muted" style="padding:5px 8px;">Deliverables</td><td style="padding:5px 8px;">Logged on ST until smokin-ops gets its own table</td></tr>
+            <tr><td class="muted" style="padding:5px 8px;">Deliverables</td><td style="padding:5px 8px;color:var(--green);"><code>build.deliverables</code> live (uuid PK · metadata jsonb) since 2026-05-03</td></tr>
             <tr><td class="muted" style="padding:5px 8px;">kb schema</td><td style="padding:5px 8px;">ingested_files · queries · citations</td></tr>
+            <tr><td class="muted" style="padding:5px 8px;">tp schema</td><td style="padding:5px 8px;color:var(--green);"><strong>decisions · decision_transitions · feedback_polls</strong> (TP v2 Builds #1–#4)</td></tr>
+            <tr><td class="muted" style="padding:5px 8px;">build schema</td><td style="padding:5px 8px;color:var(--green);"><strong>deliverables · pm_invocations · pm_mode_transitions</strong> (PM Phase 1)</td></tr>
+            <tr><td class="muted" style="padding:5px 8px;">telemetry schema</td><td style="padding:5px 8px;color:var(--green);"><strong>llm_calls</strong> + <code>v_debate_cost</code> view (Smokin Decision cost telemetry)</td></tr>
           </tbody>
         </table>
       </div>
@@ -1589,6 +1598,61 @@
       </table>
     </div>
 
+    <h3 id="tp-v2" style="margin-top:28px;">Thinking Partner v2 (TP) <span class="tag tag-green" style="font-size:10px;">NEW v3.1</span></h3>
+    <div class="card" style="margin-top:12px;">
+      <p style="margin-bottom:10px;">TP is a frictionless decision-support system. Operator captures decisions, advances them through a state machine, and optionally invokes the Adversarial Judge (Smokin Decision) for contrastive views — all without leaving Claude Code.</p>
+      <table style="font-size:13px;">
+        <tbody>
+          <tr><td class="muted" style="width:160px;padding:6px 10px;">Tables (smokin-ops <code>tp</code>)</td><td style="padding:6px 10px;"><code>decisions</code> · <code>decision_transitions</code> · <code>feedback_polls</code></td></tr>
+          <tr><td class="muted" style="padding:6px 10px;">State machine</td><td style="padding:6px 10px;">open → considered → committed → applied → outcome_known</td></tr>
+          <tr><td class="muted" style="padding:6px 10px;">Slash commands</td><td style="padding:6px 10px;"><code>/decide</code> · <code>/advance</code> · <code>/advance-finish</code> · <code>/challenge</code> · <code>/challenge-finish</code> · <code>/tp-feedback-summary</code></td></tr>
+          <tr><td class="muted" style="padding:6px 10px;">Judge integration</td><td style="padding:6px 10px;"><code>POST /debate</code> on Smokin Decision backend (async; consume via SSE or <code>/verdict</code> polling)</td></tr>
+          <tr><td class="muted" style="padding:6px 10px;">Daily feedback poll</td><td style="padding:6px 10px;">SessionStart hook <code>tp-feedback-poll.sh</code> — Q1 per-decision aging + Q2 system feedback (4-day window)</td></tr>
+          <tr><td class="muted" style="padding:6px 10px;">Builds shipped</td><td style="padding:6px 10px;color:var(--green);">#1 (state machine 2026-05-02) · #2 (transitions) · #3 v2 (slash commands 2026-05-02) · #4 (feedback poll 2026-05-02)</td></tr>
+          <tr><td class="muted" style="padding:6px 10px;">Status</td><td style="padding:6px 10px;color:var(--green);">LIVE — overview at <code>note_to_claude_thinking_partner_v2_overview_20260503.md</code></td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3 id="pm-instrumentation" style="margin-top:24px;">PM Skill Instrumentation (Phase 1) <span class="tag tag-green" style="font-size:10px;">NEW v3.1</span></h3>
+    <div class="card" style="margin-top:12px;">
+      <p style="margin-bottom:10px;">Cost-discipline telemetry for the project-manager skill. Every <code>/pm</code> dispatch logs open + close + first mode transition. Phase 2 (per-mode model routing — Haiku for digest/report, Sonnet for plan/dispatch, Opus for forecast/risk/escalate) parked until 5 baseline invocations log real cost data.</p>
+      <table style="font-size:13px;">
+        <tbody>
+          <tr><td class="muted" style="width:160px;padding:6px 10px;">Tables (smokin-ops <code>build</code>)</td><td style="padding:6px 10px;"><code>pm_invocations</code> (15 cols, RLS) · <code>pm_mode_transitions</code> (7 cols, append-only on service_role)</td></tr>
+          <tr><td class="muted" style="padding:6px 10px;">Shipped</td><td style="padding:6px 10px;">2026-05-03 · smokin-ops PR #11 + claude-config PR #18 merged</td></tr>
+          <tr><td class="muted" style="padding:6px 10px;">Dispatch wiring</td><td style="padding:6px 10px;"><code>dispatch.md</code> logs open + close + first transition on every PM invocation</td></tr>
+          <tr><td class="muted" style="padding:6px 10px;">Status</td><td style="padding:6px 10px;color:var(--green);">LIVE — Phase 2 model routing parked until baseline data accumulates</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3 id="sd-telemetry" style="margin-top:24px;">Smokin Decision Cost Telemetry (Phase 1) <span class="tag tag-green" style="font-size:10px;">NEW v3.1</span></h3>
+    <div class="card" style="margin-top:12px;">
+      <p style="margin-bottom:10px;">Per-LLM-call telemetry for every Adversarial Judge debate. Anon publishable key + RLS for write path. Phase 2 (cost-attribution rollups + alerting) parked until 5+ debates accumulate.</p>
+      <table style="font-size:13px;">
+        <tbody>
+          <tr><td class="muted" style="width:160px;padding:6px 10px;">Table (smokin-ops <code>telemetry</code>)</td><td style="padding:6px 10px;"><code>llm_calls</code> + <code>v_debate_cost</code> view</td></tr>
+          <tr><td class="muted" style="padding:6px 10px;">Shipped</td><td style="padding:6px 10px;">2026-05-05 · PR #12 merged</td></tr>
+          <tr><td class="muted" style="padding:6px 10px;">Status</td><td style="padding:6px 10px;color:var(--green);">LIVE — query <code>$/debate</code> trigger to see live cost data</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3 id="wd-blotter" style="margin-top:24px;">Whiskey Down — Blotter Parser Pipeline <span class="tag tag-green" style="font-size:10px;">NEW v3.1</span></h3>
+    <div class="card" style="margin-top:12px;">
+      <p style="margin-bottom:10px;">Long-format trade ingestion sibling to <code>usdcad_vol_daily</code>. Iter 2 paused awaiting two operator decisions before Phase E.</p>
+      <table style="font-size:13px;">
+        <tbody>
+          <tr><td class="muted" style="width:160px;padding:6px 10px;">Table (Whiskey Down)</td><td style="padding:6px 10px;"><code>usdcad_blotter_trades</code> (long-format)</td></tr>
+          <tr><td class="muted" style="padding:6px 10px;">Shipped</td><td style="padding:6px 10px;">Migration <code>20260504040000</code> · WD PR #30 merged 2026-05-04</td></tr>
+          <tr><td class="muted" style="padding:6px 10px;">Iter 2 state</td><td style="padding:6px 10px;color:var(--orange);">PAUSED — 145 rows / 24 days / 113 unparsed (committed <code>cd56b28</code>, NOT pushed)</td></tr>
+          <tr><td class="muted" style="padding:6px 10px;">Open decisions</td><td style="padding:6px 10px;">(1) row-mapping for 4/22–4/28 · (2) aggressor/counterparty schema-orientation X vs Y</td></tr>
+          <tr><td class="muted" style="padding:6px 10px;">Trigger</td><td style="padding:6px 10px;"><code>resume frosty-parsing-blotter</code></td></tr>
+        </tbody>
+      </table>
+    </div>
+
     <h3>Frontend Stack Summary</h3>
     <div class="card" style="margin-top:12px;">
       <p><strong>Stack:</strong> Vanilla HTML + CSS + Plotly.js v2.27.0. No React, no Next.js, no TypeScript on the frontend.</p>
@@ -1599,8 +1663,8 @@
   </section>
 
   <div style="padding: 32px 0 48px; border-top: 1px solid var(--border); margin-top: 16px;">
-    <p style="font-size:12px;">Generated 2026-05-08 · Internal reference · SmokinTerritory Architecture <strong>v3</strong> · supersedes v2 (2026-04-26) · No engagement beacon (internal use only)</p>
-    <p style="font-size:11px;color:var(--muted);margin-top:6px;">Source: live <code>~/.claude/agents/</code> · <code>~/.claude/hooks/</code> · <code>~/.claude/settings.json</code> · MEMORY.md milestones · CLAUDE.md routing tables · Convergence Plan (deliverables.id=317) · pgvector gate state (deliverables.id=319, verdict NO-GO, closed 2026-05-06). Original v1 at <code>smokin-territory-architecture.html</code>, untouched.</p>
+    <p style="font-size:12px;">Generated 2026-05-08 · Internal reference · SmokinTerritory Architecture <strong>v3.1</strong> · supersedes v3 (same day) · accuracy patch — adds TP v2 / PM instrumentation / Smokin Decision telemetry / WD blotter parser; corrects hook count 25→20 · No engagement beacon (internal use only)</p>
+    <p style="font-size:11px;color:var(--muted);margin-top:6px;">Source: live <code>~/.claude/agents/</code> · <code>~/.claude/hooks/</code> · <code>~/.claude/settings.json</code> · MEMORY.md milestones · CLAUDE.md routing tables · Convergence Plan (deliverables.id=317) · pgvector gate state (deliverables.id=319, verdict NO-GO, closed 2026-05-06) · TP v2 overview (note_to_claude_thinking_partner_v2_overview_20260503.md) · PM Phase 1 (build.deliverables.id=28cc8251) · SD telemetry (build.deliverables.id=79215339).</p>
   </div>
 
 </main>
