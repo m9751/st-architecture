@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>SmokinTerritory — Architecture Reference v3.1</title>
+<title>SmokinTerritory — Architecture Reference v3.2</title>
 <style>
   :root {
     --bg: #0A1628;
@@ -491,6 +491,80 @@
     margin: 20px 0;
   }
 
+  /* ─── v3.2 Platform / Tenant Model ─── */
+  .pt-frame {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 28px;
+    margin: 24px 0 8px;
+  }
+  .pt-col {
+    background: var(--surface);
+    border-radius: 12px;
+    padding: 22px 26px;
+    border: 1px solid var(--border);
+  }
+  .pt-col.platform { border: 2px solid var(--green); }
+  .pt-col.tenant   { border: 2px solid var(--blue); }
+  .pt-col .pt-label {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    margin-bottom: 6px;
+  }
+  .pt-col.platform .pt-label { color: var(--green); }
+  .pt-col.tenant   .pt-label { color: var(--blue); }
+  .pt-col .pt-defn {
+    font-size: 13px;
+    color: var(--muted);
+    margin-bottom: 18px;
+    border-bottom: 1px dashed var(--border);
+    padding-bottom: 14px;
+    line-height: 1.55;
+  }
+  .pt-col ul {
+    list-style: none;
+    padding-left: 0;
+    margin: 0;
+  }
+  .pt-col li {
+    padding: 9px 0;
+    border-bottom: 1px dashed rgba(30,58,95,0.5);
+    font-size: 13px;
+    line-height: 1.5;
+  }
+  .pt-col li:last-child { border-bottom: none; }
+  .pt-col li strong { color: var(--text); }
+  .pt-col li .role {
+    display: block;
+    font-size: 11.5px;
+    color: var(--muted);
+    margin-top: 2px;
+  }
+  .pt-col li.placeholder {
+    background: rgba(245,158,11,0.06);
+    border: 1px dashed rgba(245,158,11,0.4);
+    border-radius: 6px;
+    padding: 9px 12px;
+    margin-top: 8px;
+  }
+  .pt-col li.placeholder strong { color: var(--orange); }
+  .pt-thesis {
+    background: rgba(16,185,129,0.06);
+    border: 1px solid rgba(16,185,129,0.3);
+    border-radius: 8px;
+    padding: 14px 18px;
+    margin-top: 18px;
+    font-size: 13px;
+    color: var(--text);
+    line-height: 1.6;
+  }
+  .pt-thesis strong { color: var(--green); }
+  @media (max-width: 820px) {
+    .pt-frame { grid-template-columns: 1fr; }
+  }
+
   code {
     font-family: 'SF Mono', 'Fira Code', monospace;
     font-size: 12px;
@@ -549,8 +623,8 @@
     <h1>SmokinTerritory Architecture Reference</h1>
     <div class="meta">
       <span class="badge">INTERNAL</span>
-      <span class="badge" style="color:var(--green);border-color:rgba(16,185,129,0.4);">v3.1 · 2026-05-08</span>
-      <span class="badge" style="color:var(--muted);">supersedes v3 (same day) · v2 · 2026-04-26</span>
+      <span class="badge" style="color:var(--green);border-color:rgba(16,185,129,0.4);">v3.2 · 2026-05-09</span>
+      <span class="badge" style="color:var(--muted);">supersedes v3.1 · v3 · v2 · 2026-04-26</span>
       <span style="color:var(--muted)">Michael Busacca · Enterprise AE, MuleSoft Healthcare · Salesforce</span>
     </div>
   </div>
@@ -559,7 +633,13 @@
   <!-- v3 CHANGELOG BAND                           -->
   <!-- ─────────────────────────────────────────── -->
   <div class="changelog">
-    <div class="cl-title">What's new in v3.1 (2026-05-08 same-day refresh — accuracy patch)</div>
+    <div class="cl-title">What's new in v3.2 (2026-05-09 — Platform vs Tenant split made explicit)</div>
+    <ul>
+      <li><strong>+ Platform / Tenant model</strong> — new top-of-page section explicitly separates <strong>PLATFORM</strong> (Claude Code OS · smokin-ops · Smokin Decision · Smokin Semantic Layer · TP v2) from <strong>TENANTS</strong> (SmokinTerritory · Whiskey Down · Application 3 placeholder). No content removed; only re-grouped. The platform-vs-application story now tells itself.</li>
+      <li><strong>Δ TP v2 reframed</strong> — moved from "5th top-level system" peer position into the Platform column. TP v2 is itself a tenant of smokin-ops <em>and</em> a platform service used by the operator — that duality is the whole point.</li>
+      <li><strong>Δ Triad framing preserved, recast</strong> — three Supabase projects still isolated under "never cross the streams." Recast: smokin-ops is platform; ST and WD are tenants. Platform components observe both tenants; tenants stay isolated.</li>
+    </ul>
+    <div class="cl-title" style="margin-top:18px;">Earlier — v3 → v3.1 (2026-05-08 same-day refresh — accuracy patch)</div>
     <ul>
       <li><strong>+ TP v2 (Thinking Partner) shipped</strong> — Builds #1–#4 live on smokin-ops <code>tp</code> schema: <code>tp.decisions</code>, <code>tp.decision_transitions</code>, <code>tp.feedback_polls</code>. Slash commands: <code>/decide</code> · <code>/advance</code> · <code>/advance-finish</code> · <code>/challenge</code> · <code>/challenge-finish</code> · <code>/tp-feedback-summary</code>. Adversarial Judge wired via <code>POST /debate</code> on Smokin Decision backend.</li>
       <li><strong>+ PM instrumentation Phase 1 shipped</strong> (2026-05-03) — <code>build.pm_invocations</code> + <code>build.pm_mode_transitions</code> on smokin-ops. Open + close + first transition logged on every <code>/pm</code> dispatch. Phase 2 (per-mode model routing) parked until 5 baseline invocations.</li>
@@ -576,6 +656,69 @@
       <li><strong>+ smokin-ops stable</strong> — Supabase org RealFishTaco. KB pipeline: 15,267 pts across 4 collections.</li>
     </ul>
   </div>
+
+  <!-- ─────────────────────────────────────────── -->
+  <!-- SECTION 0: THE PLATFORM / TENANT MODEL       -->
+  <!-- ─────────────────────────────────────────── -->
+  <section id="platform-tenant-model">
+    <h2><span class="num">0</span> The Platform / Tenant Model <span class="tag tag-green" style="font-size:10px;vertical-align:middle;">NEW v3.2</span></h2>
+
+    <p>This system is a <strong>personal operating system</strong> with applications running on it. Some components are platform — domain-agnostic, hardened once, hosting many. Some are tenants — self-contained applications that use the platform to do their job. Reading the page top to bottom, the platform-vs-application story should be visible in 30 seconds.</p>
+
+    <div class="pt-frame">
+
+      <div class="pt-col platform">
+        <div class="pt-label">Platform</div>
+        <div class="pt-defn">Domain-agnostic infrastructure. Hardens once, hosts many. Observes every tenant. Survives any single application being retired.</div>
+        <ul>
+          <li>
+            <strong>Claude Code OS</strong>
+            <span class="role">Rules · 20 enforcement hooks · skill router (1,384 cataloged) · session lifecycle · MCP fabric (16+) · memory/handoff protocols.</span>
+          </li>
+          <li>
+            <strong>smokin-ops</strong> <code>xuvdcygqyuajtlpavafr</code>
+            <span class="role">System-of-record for runs, audit, telemetry, KB, decisions, build artifacts. Schemas: <code>kb · runs · audit · telemetry · tp · build</code>.</span>
+          </li>
+          <li>
+            <strong>Smokin Decision</strong>
+            <span class="role">Adversarial Judge / verdict engine. Railway backend + Vercel frontend. Called by any tenant via <code>POST /debate</code>.</span>
+          </li>
+          <li>
+            <strong>Smokin Semantic Layer v1</strong>
+            <span class="role">Deterministic decision functions in Postgres (ICS classify · HRRP exposure · engagement gate). Pure logic, no model calls.</span>
+          </li>
+          <li>
+            <strong>Thinking Partner v2 (TP)</strong>
+            <span class="role">Decision capture + state machine for the operator. Lives in <code>smokin-ops.tp</code>; consumes Smokin Decision. Both a <em>tenant of smokin-ops</em> and a <em>platform service</em> for the operator — that duality is the model becoming self-aware.</span>
+          </li>
+        </ul>
+      </div>
+
+      <div class="pt-col tenant">
+        <div class="pt-label">Tenants</div>
+        <div class="pt-defn">A self-contained application running on the platform. Each owns its Supabase project, its scoring/logic engines, and its own brand surface. Tenants never cross the streams. The platform does.</div>
+        <ul>
+          <li>
+            <strong>SmokinTerritory — Application 1</strong> <code>cnplogkxbjecdeeritdl</code>
+            <span class="role">Sales / territory engine. 865 healthcare accounts, 469 parent orgs. Six scoring engines (TYS · CHPS · BHPS · PSPS · RMS · Golden Record). Brief API · campaigns · proposals · POVs.</span>
+          </li>
+          <li>
+            <strong>Whiskey Down — Application 2</strong> <code>wwmhnjfmrbqemeygygcn</code>
+            <span class="role">FX research / trading desk. Backtests, candidates, USDCAD blotter, fusion runs, published_ideas store. Validates that the platform model holds across a totally different domain.</span>
+          </li>
+          <li class="placeholder">
+            <strong>Application 3 — TBD</strong>
+            <span class="role">Reserved slot. Proves the platform is genuinely transferable. Not yet picked. The empty slot is the point — the architecture is ready for it.</span>
+          </li>
+        </ul>
+      </div>
+
+    </div>
+
+    <div class="pt-thesis">
+      <strong>Why this split matters.</strong> A platform with one tenant is just an application with extra steps. A platform with two tenants in different domains (sales + trading) is a platform under test. A platform with three tenants — where the third is something genuinely different — is a transferable system. v3.2 makes the model visible on the page so the next decision (what's Application 3?) can be made with the architecture in front of you, not in your head.
+    </div>
+  </section>
 
   <!-- ─────────────────────────────────────────── -->
   <!-- SECTION 1: OVERVIEW                         -->
@@ -1663,7 +1806,7 @@
   </section>
 
   <div style="padding: 32px 0 48px; border-top: 1px solid var(--border); margin-top: 16px;">
-    <p style="font-size:12px;">Generated 2026-05-08 · Internal reference · SmokinTerritory Architecture <strong>v3.1</strong> · supersedes v3 (same day) · accuracy patch — adds TP v2 / PM instrumentation / Smokin Decision telemetry / WD blotter parser; corrects hook count 25→20 · No engagement beacon (internal use only)</p>
+    <p style="font-size:12px;">Generated 2026-05-09 · Internal reference · SmokinTerritory Architecture <strong>v3.2</strong> · supersedes v3.1 · Platform vs Tenant split made explicit (Section 0). No content removed, only re-grouped. Sections 1–7 unchanged. · No engagement beacon (internal use only)</p>
     <p style="font-size:11px;color:var(--muted);margin-top:6px;">Source: live <code>~/.claude/agents/</code> · <code>~/.claude/hooks/</code> · <code>~/.claude/settings.json</code> · MEMORY.md milestones · CLAUDE.md routing tables · Convergence Plan (deliverables.id=317) · pgvector gate state (deliverables.id=319, verdict NO-GO, closed 2026-05-06) · TP v2 overview (note_to_claude_thinking_partner_v2_overview_20260503.md) · PM Phase 1 (build.deliverables.id=28cc8251) · SD telemetry (build.deliverables.id=79215339).</p>
   </div>
 
