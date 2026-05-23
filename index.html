@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>SmokinTerritory — Architecture Reference v3.3 (Smokin Stack v1.0)</title>
+<title>SmokinTerritory — Architecture Reference v3.4 (Smokin Stack v1.0)</title>
 <style>
   :root {
     --bg: #0A1628;
@@ -591,14 +591,50 @@
     body { background: #fff; color: #000; }
     .card, .surface, .engine-row { background: #f8f8f8; border-color: #ddd; }
   }
+  @media (max-width: 768px) {
+    nav { display: none; }
+    main { margin-left: 0; padding: 20px 16px; }
+    .card-grid { grid-template-columns: 1fr; }
+    .pt-frame { grid-template-columns: 1fr; }
+  }
+  /* Reading progress bar */
+  #reading-progress {
+    position: fixed;
+    top: 0;
+    left: 220px;
+    right: 0;
+    height: 3px;
+    background: var(--blue);
+    transform-origin: left;
+    transform: scaleX(0);
+    transition: transform 0.1s linear;
+    z-index: 200;
+  }
+  @media (max-width: 768px) {
+    #reading-progress { left: 0; }
+  }
+  /* details/summary accordion */
+  details summary {
+    cursor: pointer;
+    color: var(--blue);
+    font-weight: 600;
+    font-size: 13px;
+    padding: 8px 0;
+    user-select: none;
+  }
+  details summary:hover { color: var(--text); }
+  details[open] summary { margin-bottom: 12px; }
 </style>
 </head>
 <body>
 
-<nav>
+<div id="reading-progress" aria-hidden="true"></div>
+<nav role="navigation" aria-label="Architecture sections">
   <span class="logo">SmokinTerritory</span>
   <div class="nav-section">Architecture</div>
   <ul>
+    <li><a href="#platform-tenant-model">0. Platform / Tenant</a></li>
+    <li><a href="#app-portfolio">0b. App Portfolio</a></li>
     <li><a href="#overview">1. Overview</a></li>
     <li><a href="#layer-diagram">2. Layer Diagram</a></li>
     <li><a href="#data-flow">3. Data Flow</a></li>
@@ -609,9 +645,10 @@
   </ul>
   <div class="nav-section">Quick Ref</div>
   <ul>
-    <li><a href="#hooks">Hooks (20)</a></li>
+    <li><a href="#hooks">Hooks (45)</a></li>
     <li><a href="#tp-v2">TP v2 (Thinking Partner)</a></li>
     <li><a href="#agents">Agents (5)</a></li>
+    <li><a href="#orchestrator">Orchestrator</a></li>
     <li><a href="#mcps">MCP Servers (16+)</a></li>
     <li><a href="#ssl">Smokin Semantic Layer v1</a></li>
   </ul>
@@ -626,7 +663,7 @@
     </div>
     <div class="meta">
       <span class="badge">INTERNAL</span>
-      <span class="badge" style="color:var(--green);border-color:rgba(16,185,129,0.4);">v3.3 · 2026-05-09</span>
+      <span class="badge" style="color:var(--green);border-color:rgba(16,185,129,0.4);">v3.4 · 2026-05-22</span>
       <span class="badge" style="color:var(--green);border-color:rgba(16,185,129,0.55);background:rgba(16,185,129,0.08);">STACK v1.0</span>
       <span class="badge" style="color:var(--muted);">supersedes v3.2 · v3.1 · v3 · v2</span>
       <span style="color:var(--muted)">Michael Busacca · Enterprise AE, MuleSoft Healthcare · Salesforce</span>
@@ -637,7 +674,16 @@
   <!-- v3 CHANGELOG BAND                           -->
   <!-- ─────────────────────────────────────────── -->
   <div class="changelog">
-    <div class="cl-title">What's new in v3.3 (2026-05-09 — Smokin Stack v1.0 named)</div>
+    <div class="cl-title">What's new in v3.4 (2026-05-22 — Governance layer named)</div>
+    <ul>
+      <li><strong>+ Governance layer</strong> added to System Layers diagram — <code>smokin-os</code> (spec &amp; governance), <code>claude-config</code> (runtime enforcement), <code>smokin-mirror</code> (cross-machine sync), <code>Codex CLI</code> (adversarial reviewer). The OS now has a visible layer above Compute.</li>
+      <li><strong>+ Application Portfolio section</strong> (Section 0b) — Platform Tools, SmokinTerritory Tools, WD Tools named and described for the first time.</li>
+      <li><strong>+ Hook count corrected: 20 → 45</strong> — Full hook inventory as of 2026-05-22. Prior count was stale post-May-09 shipments.</li>
+      <li><strong>+ smokin-orchestrator</strong> added to AI Infrastructure — c_four_plus winner confirmed, 38% quality improvement over single-agent. Brief format standard codified.</li>
+      <li><strong>+ PM Phase 2 model routing</strong> (PR #75) — Haiku/Sonnet/Opus dispatch split documented.</li>
+      <li><strong>Δ UX</strong> — query-string routing (no scroll-jump), <code>&lt;details&gt;</code> accordions on large tables, reading progress bar, mobile breakpoint (<code>@media max-width: 768px</code>), accessible nav roles.</li>
+    </ul>
+    <div class="cl-title" style="margin-top:18px;">Earlier — v3.3 (2026-05-09 — Smokin Stack v1.0 named)</div>
     <ul>
       <li><strong>+ Umbrella name: <span style="color:var(--green);">Smokin Stack v1.0</span></strong> — the family above all the named pieces. Platform components (Claude Code OS, smokin-ops, Smokin Decision, Smokin Semantic Layer v1, TP v2) and tenant applications (SmokinTerritory v3.x, Whiskey Down, Application 3 TBD) are all parts of <em>one</em> system with <em>one</em> coordinate. Bumping rule: umbrella version moves when the <em>shape</em> changes (new tenant, new platform component, structural rewrite). Sub-component iteration leaves it untouched.</li>
       <li><strong>Δ Header reframed</strong> — "Part of Smokin Stack v1.0 — the personal operating system" sits under the H1. STACK v1.0 badge added to the meta row. Single coordinate for "what version of my system am I on."</li>
@@ -730,6 +776,78 @@
   </section>
 
   <!-- ─────────────────────────────────────────── -->
+  <!-- SECTION 0b: APPLICATION PORTFOLIO           -->
+  <!-- ─────────────────────────────────────────── -->
+  <section id="app-portfolio">
+    <h2><span class="num" style="background:var(--purple);">0b</span> Application Portfolio</h2>
+    <p>What the platform produces. Three groups: platform tools (serve all tenants), SmokinTerritory tools (Tenant 1), Whiskey Down tools (Tenant 2). Platform tools are domain-agnostic and hardened once; tenant tools are self-contained applications.</p>
+
+    <h3>Platform Tools</h3>
+    <div class="card-grid">
+      <div class="card">
+        <strong>Smokin Decision</strong> <span class="tag tag-green">Live</span>
+        <p style="margin-top:8px; color:var(--muted); font-size:13px;">Adversarial reasoning engine — submit hypotheses, get structured debate verdicts from Claude, GPT, Gemini, Grok. Railway backend + Vercel frontend.</p>
+      </div>
+      <div class="card">
+        <strong>Thinking Partner v2</strong> <span class="tag tag-green">Live</span>
+        <p style="margin-top:8px; color:var(--muted); font-size:13px;">Decision capture + state machine for the operator. Lives in smokin-ops.tp schema. Slash commands: /decide · /advance · /challenge.</p>
+      </div>
+      <div class="card">
+        <strong>smokin-orchestrator</strong> <span class="tag tag-green">Live</span>
+        <p style="margin-top:8px; color:var(--muted); font-size:13px;">Multi-agent evaluation harness. c_four_plus topology (4 subagents) proved 38% quality improvement over single-agent. Invoke: "run the orchestrator on [account]".</p>
+      </div>
+      <div class="card">
+        <strong>Agent Operating Framework</strong> <span class="tag tag-green">Public · MIT</span>
+        <p style="margin-top:8px; color:var(--muted); font-size:13px;">Open-source behavioral OS for AI coding agents. v1.5. The public extraction of the claude-config architecture — hooks, rules, gates, incidents. github.com/m9751/agent-operating-framework.</p>
+      </div>
+      <div class="card">
+        <strong>CMS API Hub</strong> <span class="tag tag-green">Live</span>
+        <p style="margin-top:8px; color:var(--muted); font-size:13px;">Vercel API layer for CMS/NPI/territory data queries. Routes: account-intel, quality-risk, ehr-targets, financial-risk, provider-mdm. cms-api-hub.vercel.app.</p>
+      </div>
+    </div>
+
+    <h3>SmokinTerritory Tools (Tenant 1)</h3>
+    <div class="card-grid">
+      <div class="card">
+        <strong>Scoring Engines (6 + SSL v1)</strong> <span class="tag tag-green">Live</span>
+        <p style="margin-top:8px; color:var(--muted); font-size:13px;">TYS v7.6 · CHPS v1.1 · BHPS v1 · PSPS v1.4 · RMS v1 · Golden Record v2. Smokin Semantic Layer v1: 3 deterministic Postgres functions (ICS classify · HRRP exposure · engagement gate).</p>
+      </div>
+      <div class="card">
+        <strong>Signal Pipeline + Brief API</strong> <span class="tag tag-green">Live</span>
+        <p style="margin-top:8px; color:var(--muted); font-size:13px;">GitHub Actions crons collect signals from Tavily, RSS, CMS/SAM.gov. Brief API surfaces daily account intelligence. Cron: Mon-Fri 11:00 UTC.</p>
+      </div>
+      <div class="card">
+        <strong>WARN Pipeline</strong> <span class="tag tag-green">Live</span>
+        <p style="margin-top:8px; color:var(--muted); font-size:13px;">WARN Act layoff intelligence — 50 US states, flags healthcare companies, fuzzy-matches against 865 Salesforce accounts. Upserts to warn_events.</p>
+      </div>
+      <div class="card">
+        <strong>IDP ROI Calculator</strong> <span class="tag tag-green">Live</span>
+        <p style="margin-top:8px; color:var(--muted); font-size:13px;">MuleSoft IDP ROI calculator with full engagement tracking. idp-roi-calculator-wine.vercel.app.</p>
+      </div>
+      <div class="card">
+        <strong>Anypoint Entitlement Guide</strong> <span class="tag tag-green">Live</span>
+        <p style="margin-top:8px; color:var(--muted); font-size:13px;">Interactive guide for verifying MuleSoft Anypoint Platform flow and vCore usage against subscription entitlements.</p>
+      </div>
+    </div>
+
+    <h3>Whiskey Down Tools (Tenant 2)</h3>
+    <div class="card-grid">
+      <div class="card">
+        <strong>Backtest + Candidate Engine</strong> <span class="tag tag-green">Live</span>
+        <p style="margin-top:8px; color:var(--muted); font-size:13px;">Deno-based FX research platform. Backtests, candidate generation, fusion runs, USDCAD signal pipeline, published_ideas_store (INSERT-only via freeze_role).</p>
+      </div>
+      <div class="card">
+        <strong>WD Blotter Parser</strong> <span class="tag tag-orange">In Progress</span>
+        <p style="margin-top:8px; color:var(--muted); font-size:13px;">usdcad_blotter_trades long-format table. 145 rows / 24 days parsed. Aggressor/counterparty schema orientation in progress.</p>
+      </div>
+      <div class="card">
+        <strong>WD Next Dashboard</strong> <span class="tag tag-orange">Experimental</span>
+        <p style="margin-top:8px; color:var(--muted); font-size:13px;">Next.js admin dashboard with shadcn/ui, Tailwind, and Claude Code skills integration.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ─────────────────────────────────────────── -->
   <!-- SECTION 1: OVERVIEW                         -->
   <!-- ─────────────────────────────────────────── -->
   <section id="overview">
@@ -790,10 +908,10 @@
   <!-- ─────────────────────────────────────────── -->
   <section id="layer-diagram">
     <h2><span class="num">2</span> System Layers</h2>
-    <p>Three-layer architecture: compute services expose data and APIs; the data layer persists and indexes everything; the AI layer orchestrates intelligence on top.</p>
+    <p>Four-layer architecture: a governance layer defines spec and enforcement; compute services expose data and APIs; the data layer persists and indexes everything; the AI layer orchestrates intelligence on top.</p>
 
     <div class="svg-wrap">
-      <svg viewBox="0 0 1200 560" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto;display:block;">
+      <svg viewBox="0 0 1200 700" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto;display:block;">
         <defs>
           <marker id="arrow" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">
             <polygon points="0 0, 8 3, 0 6" fill="#10B981"/>
@@ -801,156 +919,186 @@
         </defs>
 
         <!-- Layer labels -->
-        <text x="20" y="106" fill="#94A3B8" font-size="11" font-weight="700" letter-spacing="1.5" transform="rotate(-90,20,106)" text-anchor="middle">COMPUTE</text>
-        <text x="20" y="296" fill="#94A3B8" font-size="11" font-weight="700" letter-spacing="1.5" transform="rotate(-90,20,296)" text-anchor="middle">DATA</text>
-        <text x="20" y="476" fill="#94A3B8" font-size="11" font-weight="700" letter-spacing="1.5" transform="rotate(-90,20,476)" text-anchor="middle">AI LAYER</text>
+        <text x="20" y="90" fill="#F59E0B" font-size="11" font-weight="700" letter-spacing="1.5" transform="rotate(-90,20,90)" text-anchor="middle">GOVERNANCE</text>
+        <text x="20" y="246" fill="#94A3B8" font-size="11" font-weight="700" letter-spacing="1.5" transform="rotate(-90,20,246)" text-anchor="middle">COMPUTE</text>
+        <text x="20" y="436" fill="#94A3B8" font-size="11" font-weight="700" letter-spacing="1.5" transform="rotate(-90,20,436)" text-anchor="middle">DATA</text>
+        <text x="20" y="616" fill="#94A3B8" font-size="11" font-weight="700" letter-spacing="1.5" transform="rotate(-90,20,616)" text-anchor="middle">AI LAYER</text>
 
         <!-- Layer bands -->
-        <rect x="44" y="20" width="1140" height="172" rx="10" fill="#0F1E35" stroke="#1E3A5F" stroke-width="1"/>
-        <rect x="44" y="210" width="1140" height="172" rx="10" fill="#0F1E35" stroke="#1E3A5F" stroke-width="1"/>
-        <rect x="44" y="400" width="1140" height="140" rx="10" fill="#0F1E35" stroke="#1E3A5F" stroke-width="1"/>
+        <rect x="44" y="20" width="1140" height="120" rx="10" fill="#1A1A0A" stroke="#F59E0B" stroke-width="1" stroke-dasharray="4,3"/>
+        <rect x="44" y="160" width="1140" height="172" rx="10" fill="#0F1E35" stroke="#1E3A5F" stroke-width="1"/>
+        <rect x="44" y="350" width="1140" height="172" rx="10" fill="#0F1E35" stroke="#1E3A5F" stroke-width="1"/>
+        <rect x="44" y="540" width="1140" height="140" rx="10" fill="#0F1E35" stroke="#1E3A5F" stroke-width="1"/>
+
+        <!-- GOVERNANCE LAYER BOXES -->
+        <rect x="60" y="34" width="230" height="90" rx="8" fill="#1C1800" stroke="#F59E0B" stroke-width="1.5"/>
+        <text x="175" y="58" fill="#FCD34D" font-size="13" font-weight="700" text-anchor="middle">smokin-os</text>
+        <text x="175" y="76" fill="#94A3B8" font-size="10" text-anchor="middle">Spec &amp; Governance</text>
+        <text x="175" y="91" fill="#94A3B8" font-size="10" text-anchor="middle">Docs-only · source of truth</text>
+        <text x="175" y="106" fill="#94A3B8" font-size="10" text-anchor="middle">github.com/m9751/smokin-os</text>
+
+        <rect x="310" y="34" width="230" height="90" rx="8" fill="#0A1628" stroke="#00A1DF" stroke-width="1.5"/>
+        <text x="425" y="58" fill="#38BDF8" font-size="13" font-weight="700" text-anchor="middle">claude-config</text>
+        <text x="425" y="76" fill="#94A3B8" font-size="10" text-anchor="middle">Runtime Enforcement</text>
+        <text x="425" y="91" fill="#94A3B8" font-size="10" text-anchor="middle">hooks · rules · skills · settings</text>
+        <text x="425" y="106" fill="#94A3B8" font-size="10" text-anchor="middle">45 hooks · make install</text>
+
+        <rect x="560" y="34" width="210" height="90" rx="8" fill="#0A1628" stroke="#8B5CF6" stroke-width="1.5"/>
+        <text x="665" y="58" fill="#A78BFA" font-size="13" font-weight="700" text-anchor="middle">smokin-mirror</text>
+        <text x="665" y="76" fill="#94A3B8" font-size="10" text-anchor="middle">Cross-machine Sync</text>
+        <text x="665" y="91" fill="#94A3B8" font-size="10" text-anchor="middle">Mac fswatch + Win11 FSW</text>
+        <text x="665" y="106" fill="#94A3B8" font-size="10" text-anchor="middle">~5s drift · union merge</text>
+
+        <rect x="790" y="34" width="190" height="90" rx="8" fill="#0A1628" stroke="#6B7280" stroke-width="1.5"/>
+        <text x="885" y="58" fill="#9CA3AF" font-size="13" font-weight="700" text-anchor="middle">Codex CLI</text>
+        <text x="885" y="76" fill="#94A3B8" font-size="10" text-anchor="middle">Adversarial Reviewer</text>
+        <text x="885" y="91" fill="#94A3B8" font-size="10" text-anchor="middle">Independent Point A/B review</text>
+        <text x="885" y="106" fill="#94A3B8" font-size="10" text-anchor="middle">sandbox · read-only</text>
+
+        <!-- Arrow: GOVERNANCE → COMPUTE -->
+        <line x1="600" y1="144" x2="600" y2="158" stroke="#10B981" stroke-width="1.5" marker-end="url(#arrow)"/>
 
         <!-- COMPUTE LAYER BOXES -->
         <!-- Vercel -->
-        <rect x="72" y="44" width="200" height="124" rx="8" fill="#162440" stroke="#00A1DF" stroke-width="1.5"/>
-        <text x="172" y="70" fill="#00A1DF" font-size="13" font-weight="700" text-anchor="middle">Vercel</text>
-        <text x="172" y="90" fill="#94A3B8" font-size="11" text-anchor="middle">smokin-territory.vercel.app</text>
-        <text x="172" y="108" fill="#94A3B8" font-size="10" text-anchor="middle">5 serverless API functions</text>
-        <text x="172" y="123" fill="#94A3B8" font-size="10" text-anchor="middle">signals · brief · beacons</text>
-        <text x="172" y="140" fill="#94A3B8" font-size="10" text-anchor="middle">smokin-decision.vercel.app</text>
-        <text x="172" y="155" fill="#94A3B8" font-size="10" text-anchor="middle">cms-api-hub.vercel.app</text>
+        <rect x="72" y="184" width="200" height="124" rx="8" fill="#162440" stroke="#00A1DF" stroke-width="1.5"/>
+        <text x="172" y="210" fill="#00A1DF" font-size="13" font-weight="700" text-anchor="middle">Vercel</text>
+        <text x="172" y="230" fill="#94A3B8" font-size="11" text-anchor="middle">smokin-territory.vercel.app</text>
+        <text x="172" y="248" fill="#94A3B8" font-size="10" text-anchor="middle">5 serverless API functions</text>
+        <text x="172" y="263" fill="#94A3B8" font-size="10" text-anchor="middle">signals · brief · beacons</text>
+        <text x="172" y="280" fill="#94A3B8" font-size="10" text-anchor="middle">smokin-decision.vercel.app</text>
+        <text x="172" y="295" fill="#94A3B8" font-size="10" text-anchor="middle">cms-api-hub.vercel.app</text>
 
         <!-- GitHub Actions -->
-        <rect x="302" y="44" width="200" height="124" rx="8" fill="#162440" stroke="#6B7280" stroke-width="1.5"/>
-        <text x="402" y="70" fill="#E2E8F0" font-size="13" font-weight="700" text-anchor="middle">GitHub Actions</text>
-        <text x="402" y="90" fill="#94A3B8" font-size="11" text-anchor="middle">m9751/smokin-territory</text>
-        <text x="402" y="108" fill="#94A3B8" font-size="10" text-anchor="middle">Monthly signal pipeline crons</text>
-        <text x="402" y="123" fill="#94A3B8" font-size="10" text-anchor="middle">Tavily · RSS · Twitter/X</text>
-        <text x="402" y="140" fill="#94A3B8" font-size="10" text-anchor="middle">Substack · Modern Healthcare</text>
-        <text x="402" y="155" fill="#94A3B8" font-size="10" text-anchor="middle">Auto-deploy on push</text>
+        <rect x="302" y="184" width="200" height="124" rx="8" fill="#162440" stroke="#6B7280" stroke-width="1.5"/>
+        <text x="402" y="210" fill="#E2E8F0" font-size="13" font-weight="700" text-anchor="middle">GitHub Actions</text>
+        <text x="402" y="230" fill="#94A3B8" font-size="11" text-anchor="middle">m9751/smokin-territory</text>
+        <text x="402" y="248" fill="#94A3B8" font-size="10" text-anchor="middle">Monthly signal pipeline crons</text>
+        <text x="402" y="263" fill="#94A3B8" font-size="10" text-anchor="middle">Tavily · RSS · Twitter/X</text>
+        <text x="402" y="280" fill="#94A3B8" font-size="10" text-anchor="middle">Substack · Modern Healthcare</text>
+        <text x="402" y="295" fill="#94A3B8" font-size="10" text-anchor="middle">Auto-deploy on push</text>
 
         <!-- Google Colab -->
-        <rect x="532" y="44" width="200" height="124" rx="8" fill="#162440" stroke="#F59E0B" stroke-width="1.5"/>
-        <text x="632" y="70" fill="#FCD34D" font-size="13" font-weight="700" text-anchor="middle">Google Colab</text>
-        <text x="632" y="90" fill="#94A3B8" font-size="11" text-anchor="middle">Interactive pipeline runner</text>
-        <text x="632" y="108" fill="#94A3B8" font-size="10" text-anchor="middle">SmokinTerritory_Launcher.ipynb</text>
-        <text x="632" y="123" fill="#94A3B8" font-size="10" text-anchor="middle">Manual / on-demand</text>
-        <text x="632" y="140" fill="#94A3B8" font-size="10" text-anchor="middle">Scoring · enrichment</text>
-        <text x="632" y="155" fill="#94A3B8" font-size="10" text-anchor="middle">data transforms</text>
+        <rect x="532" y="184" width="200" height="124" rx="8" fill="#162440" stroke="#F59E0B" stroke-width="1.5"/>
+        <text x="632" y="210" fill="#FCD34D" font-size="13" font-weight="700" text-anchor="middle">Google Colab</text>
+        <text x="632" y="230" fill="#94A3B8" font-size="11" text-anchor="middle">Interactive pipeline runner</text>
+        <text x="632" y="248" fill="#94A3B8" font-size="10" text-anchor="middle">SmokinTerritory_Launcher.ipynb</text>
+        <text x="632" y="263" fill="#94A3B8" font-size="10" text-anchor="middle">Manual / on-demand</text>
+        <text x="632" y="280" fill="#94A3B8" font-size="10" text-anchor="middle">Scoring · enrichment</text>
+        <text x="632" y="295" fill="#94A3B8" font-size="10" text-anchor="middle">data transforms</text>
 
         <!-- Railway -->
-        <rect x="762" y="44" width="200" height="124" rx="8" fill="#162440" stroke="#8B5CF6" stroke-width="1.5"/>
-        <text x="862" y="70" fill="#A78BFA" font-size="13" font-weight="700" text-anchor="middle">Railway</text>
-        <text x="862" y="90" fill="#94A3B8" font-size="11" text-anchor="middle">profound-grace</text>
-        <text x="862" y="108" fill="#94A3B8" font-size="10" text-anchor="middle">Paperclip daemon</text>
-        <text x="862" y="123" fill="#94A3B8" font-size="10" text-anchor="middle">Qdrant vector DB (self-hosted)</text>
-        <text x="862" y="140" fill="#94A3B8" font-size="10" text-anchor="middle">+ Smokin Decision backend</text>
-        <text x="862" y="155" fill="#94A3B8" font-size="10" text-anchor="middle">smokin-decision-production</text>
+        <rect x="762" y="184" width="200" height="124" rx="8" fill="#162440" stroke="#8B5CF6" stroke-width="1.5"/>
+        <text x="862" y="210" fill="#A78BFA" font-size="13" font-weight="700" text-anchor="middle">Railway</text>
+        <text x="862" y="230" fill="#94A3B8" font-size="11" text-anchor="middle">profound-grace</text>
+        <text x="862" y="248" fill="#94A3B8" font-size="10" text-anchor="middle">Paperclip daemon</text>
+        <text x="862" y="263" fill="#94A3B8" font-size="10" text-anchor="middle">Qdrant vector DB (self-hosted)</text>
+        <text x="862" y="280" fill="#94A3B8" font-size="10" text-anchor="middle">+ Smokin Decision backend</text>
+        <text x="862" y="295" fill="#94A3B8" font-size="10" text-anchor="middle">smokin-decision-production</text>
 
         <!-- GitHub Pages -->
-        <rect x="992" y="44" width="175" height="124" rx="8" fill="#162440" stroke="#6B7280" stroke-width="1.5"/>
-        <text x="1079" y="70" fill="#E2E8F0" font-size="13" font-weight="700" text-anchor="middle">GitHub Pages</text>
-        <text x="1079" y="90" fill="#94A3B8" font-size="11" text-anchor="middle">m9751.github.io</text>
-        <text x="1079" y="108" fill="#94A3B8" font-size="10" text-anchor="middle">Deployed proposals</text>
-        <text x="1079" y="123" fill="#94A3B8" font-size="10" text-anchor="middle">Cheatsheets · tools</text>
-        <text x="1079" y="140" fill="#94A3B8" font-size="10" text-anchor="middle">Public content only</text>
-        <text x="1079" y="155" fill="#94A3B8" font-size="10" text-anchor="middle">Auto from git push</text>
+        <rect x="992" y="184" width="175" height="124" rx="8" fill="#162440" stroke="#6B7280" stroke-width="1.5"/>
+        <text x="1079" y="210" fill="#E2E8F0" font-size="13" font-weight="700" text-anchor="middle">GitHub Pages</text>
+        <text x="1079" y="230" fill="#94A3B8" font-size="11" text-anchor="middle">m9751.github.io</text>
+        <text x="1079" y="248" fill="#94A3B8" font-size="10" text-anchor="middle">Deployed proposals</text>
+        <text x="1079" y="263" fill="#94A3B8" font-size="10" text-anchor="middle">Cheatsheets · tools</text>
+        <text x="1079" y="280" fill="#94A3B8" font-size="10" text-anchor="middle">Public content only</text>
+        <text x="1079" y="295" fill="#94A3B8" font-size="10" text-anchor="middle">Auto from git push</text>
 
         <!-- DATA LAYER BOXES -->
         <!-- Supabase ST -->
-        <rect x="60" y="234" width="180" height="124" rx="8" fill="#162440" stroke="#00A1DF" stroke-width="2"/>
-        <text x="150" y="260" fill="#00A1DF" font-size="12" font-weight="700" text-anchor="middle">Supabase — SmokinTerritory</text>
-        <text x="150" y="278" fill="#94A3B8" font-size="9" text-anchor="middle">cnplogkxbjecdeeritdl · us-west-2</text>
-        <text x="150" y="295" fill="#94A3B8" font-size="10" text-anchor="middle">PostgreSQL · 865 accounts</text>
-        <text x="150" y="311" fill="#94A3B8" font-size="10" text-anchor="middle">scoring · contacts · campaigns</text>
-        <text x="150" y="327" fill="#94A3B8" font-size="10" text-anchor="middle">signal_events · deliverables</text>
-        <text x="150" y="343" fill="#94A3B8" font-size="10" text-anchor="middle">+ Smokin Semantic Layer v1</text>
+        <rect x="60" y="374" width="180" height="124" rx="8" fill="#162440" stroke="#00A1DF" stroke-width="2"/>
+        <text x="150" y="400" fill="#00A1DF" font-size="12" font-weight="700" text-anchor="middle">Supabase — SmokinTerritory</text>
+        <text x="150" y="418" fill="#94A3B8" font-size="9" text-anchor="middle">cnplogkxbjecdeeritdl · us-west-2</text>
+        <text x="150" y="435" fill="#94A3B8" font-size="10" text-anchor="middle">PostgreSQL · 865 accounts</text>
+        <text x="150" y="451" fill="#94A3B8" font-size="10" text-anchor="middle">scoring · contacts · campaigns</text>
+        <text x="150" y="467" fill="#94A3B8" font-size="10" text-anchor="middle">signal_events · deliverables</text>
+        <text x="150" y="483" fill="#94A3B8" font-size="10" text-anchor="middle">+ Smokin Semantic Layer v1</text>
 
         <!-- Supabase WD -->
-        <rect x="252" y="234" width="180" height="124" rx="8" fill="#162440" stroke="#8B5CF6" stroke-width="1.5" stroke-dasharray="6,3"/>
-        <text x="342" y="260" fill="#A78BFA" font-size="12" font-weight="700" text-anchor="middle">Supabase — Whiskey Down</text>
-        <text x="342" y="278" fill="#94A3B8" font-size="9" text-anchor="middle">wwmhnjfmrbqemeygygcn · us-west-1</text>
-        <text x="342" y="295" fill="#94A3B8" font-size="10" text-anchor="middle">ISOLATED · WD_ env vars only</text>
-        <text x="342" y="311" fill="#94A3B8" font-size="10" text-anchor="middle">backtests · trades · candidates</text>
-        <text x="342" y="327" fill="#94A3B8" font-size="10" text-anchor="middle">published_ideas_store (RLS)</text>
-        <text x="342" y="343" fill="#94A3B8" font-size="10" text-anchor="middle">Zero cross-project joins</text>
+        <rect x="252" y="374" width="180" height="124" rx="8" fill="#162440" stroke="#8B5CF6" stroke-width="1.5" stroke-dasharray="6,3"/>
+        <text x="342" y="400" fill="#A78BFA" font-size="12" font-weight="700" text-anchor="middle">Supabase — Whiskey Down</text>
+        <text x="342" y="418" fill="#94A3B8" font-size="9" text-anchor="middle">wwmhnjfmrbqemeygygcn · us-west-1</text>
+        <text x="342" y="435" fill="#94A3B8" font-size="10" text-anchor="middle">ISOLATED · WD_ env vars only</text>
+        <text x="342" y="451" fill="#94A3B8" font-size="10" text-anchor="middle">backtests · trades · candidates</text>
+        <text x="342" y="467" fill="#94A3B8" font-size="10" text-anchor="middle">published_ideas_store (RLS)</text>
+        <text x="342" y="483" fill="#94A3B8" font-size="10" text-anchor="middle">Zero cross-project joins</text>
 
         <!-- Supabase smokin-ops (NEW v2) -->
-        <rect x="444" y="234" width="180" height="124" rx="8" fill="#162440" stroke="#F59E0B" stroke-width="1.5" stroke-dasharray="6,3"/>
-        <text x="534" y="260" fill="#FCD34D" font-size="12" font-weight="700" text-anchor="middle">Supabase — smokin-ops</text>
-        <text x="534" y="278" fill="#94A3B8" font-size="9" text-anchor="middle">xuvdcygqyuajtlpavafr · NEW</text>
-        <text x="534" y="295" fill="#94A3B8" font-size="10" text-anchor="middle">SoR · runs log · audit log</text>
-        <text x="534" y="311" fill="#94A3B8" font-size="10" text-anchor="middle">kb schema (observability)</text>
-        <text x="534" y="327" fill="#94A3B8" font-size="10" text-anchor="middle">pgvector ext installed</text>
-        <text x="534" y="343" fill="#94A3B8" font-size="10" text-anchor="middle">Schema TBD · 2026-04-26</text>
+        <rect x="444" y="374" width="180" height="124" rx="8" fill="#162440" stroke="#F59E0B" stroke-width="1.5" stroke-dasharray="6,3"/>
+        <text x="534" y="400" fill="#FCD34D" font-size="12" font-weight="700" text-anchor="middle">Supabase — smokin-ops</text>
+        <text x="534" y="418" fill="#94A3B8" font-size="9" text-anchor="middle">xuvdcygqyuajtlpavafr · NEW</text>
+        <text x="534" y="435" fill="#94A3B8" font-size="10" text-anchor="middle">SoR · runs log · audit log</text>
+        <text x="534" y="451" fill="#94A3B8" font-size="10" text-anchor="middle">kb schema (observability)</text>
+        <text x="534" y="467" fill="#94A3B8" font-size="10" text-anchor="middle">pgvector ext installed</text>
+        <text x="534" y="483" fill="#94A3B8" font-size="10" text-anchor="middle">Schema TBD · 2026-04-26</text>
 
         <!-- Qdrant (gate FAILED 2026-05-06 — Qdrant stays) -->
-        <rect x="636" y="234" width="170" height="124" rx="8" fill="#162440" stroke="#10B981" stroke-width="1.5"/>
-        <text x="721" y="260" fill="#34D399" font-size="13" font-weight="700" text-anchor="middle">Qdrant</text>
-        <text x="721" y="278" fill="#94A3B8" font-size="10" text-anchor="middle">Railway · profound-grace</text>
-        <text x="721" y="295" fill="#94A3B8" font-size="10" text-anchor="middle">4 KB collections</text>
-        <text x="721" y="311" fill="#94A3B8" font-size="10" text-anchor="middle">_general · _mulesoft</text>
-        <text x="721" y="327" fill="#94A3B8" font-size="10" text-anchor="middle">_wd · _architecture</text>
-        <text x="721" y="343" fill="#94A3B8" font-size="10" text-anchor="middle">gate FAILED 2026-05-06 — Qdrant stays</text>
+        <rect x="636" y="374" width="170" height="124" rx="8" fill="#162440" stroke="#10B981" stroke-width="1.5"/>
+        <text x="721" y="400" fill="#34D399" font-size="13" font-weight="700" text-anchor="middle">Qdrant</text>
+        <text x="721" y="418" fill="#94A3B8" font-size="10" text-anchor="middle">Railway · profound-grace</text>
+        <text x="721" y="435" fill="#94A3B8" font-size="10" text-anchor="middle">4 KB collections</text>
+        <text x="721" y="451" fill="#94A3B8" font-size="10" text-anchor="middle">_general · _mulesoft</text>
+        <text x="721" y="467" fill="#94A3B8" font-size="10" text-anchor="middle">_wd · _architecture</text>
+        <text x="721" y="483" fill="#94A3B8" font-size="10" text-anchor="middle">gate FAILED 2026-05-06 — Qdrant stays</text>
 
         <!-- Hindsight -->
-        <rect x="818" y="234" width="170" height="124" rx="8" fill="#162440" stroke="#F59E0B" stroke-width="1.5"/>
-        <text x="903" y="260" fill="#FCD34D" font-size="13" font-weight="700" text-anchor="middle">Hindsight MCP</text>
-        <text x="903" y="278" fill="#94A3B8" font-size="10" text-anchor="middle">Cross-session memory</text>
-        <text x="903" y="295" fill="#94A3B8" font-size="10" text-anchor="middle">retain / recall / reflect</text>
-        <text x="903" y="311" fill="#94A3B8" font-size="10" text-anchor="middle">directives · mental models</text>
-        <text x="903" y="327" fill="#94A3B8" font-size="10" text-anchor="middle">All 3 projects</text>
-        <text x="903" y="343" fill="#94A3B8" font-size="10" text-anchor="middle">Validated 2026-04-20</text>
+        <rect x="818" y="374" width="170" height="124" rx="8" fill="#162440" stroke="#F59E0B" stroke-width="1.5"/>
+        <text x="903" y="400" fill="#FCD34D" font-size="13" font-weight="700" text-anchor="middle">Hindsight MCP</text>
+        <text x="903" y="418" fill="#94A3B8" font-size="10" text-anchor="middle">Cross-session memory</text>
+        <text x="903" y="435" fill="#94A3B8" font-size="10" text-anchor="middle">retain / recall / reflect</text>
+        <text x="903" y="451" fill="#94A3B8" font-size="10" text-anchor="middle">directives · mental models</text>
+        <text x="903" y="467" fill="#94A3B8" font-size="10" text-anchor="middle">All 3 projects</text>
+        <text x="903" y="483" fill="#94A3B8" font-size="10" text-anchor="middle">Validated 2026-04-20</text>
 
         <!-- Google Drive -->
-        <rect x="1000" y="234" width="170" height="124" rx="8" fill="#162440" stroke="#6B7280" stroke-width="1.5"/>
-        <text x="1085" y="260" fill="#E2E8F0" font-size="13" font-weight="700" text-anchor="middle">Google Drive</text>
-        <text x="1085" y="278" fill="#94A3B8" font-size="10" text-anchor="middle">Deliverables archive</text>
-        <text x="1085" y="295" fill="#94A3B8" font-size="10" text-anchor="middle">HTML + PDF source</text>
-        <text x="1085" y="311" fill="#94A3B8" font-size="10" text-anchor="middle">Account folders</text>
-        <text x="1085" y="327" fill="#94A3B8" font-size="10" text-anchor="middle">Auto-sync via</text>
-        <text x="1085" y="343" fill="#94A3B8" font-size="10" text-anchor="middle">CloudStorage link</text>
+        <rect x="1000" y="374" width="170" height="124" rx="8" fill="#162440" stroke="#6B7280" stroke-width="1.5"/>
+        <text x="1085" y="400" fill="#E2E8F0" font-size="13" font-weight="700" text-anchor="middle">Google Drive</text>
+        <text x="1085" y="418" fill="#94A3B8" font-size="10" text-anchor="middle">Deliverables archive</text>
+        <text x="1085" y="435" fill="#94A3B8" font-size="10" text-anchor="middle">HTML + PDF source</text>
+        <text x="1085" y="451" fill="#94A3B8" font-size="10" text-anchor="middle">Account folders</text>
+        <text x="1085" y="467" fill="#94A3B8" font-size="10" text-anchor="middle">Auto-sync via</text>
+        <text x="1085" y="483" fill="#94A3B8" font-size="10" text-anchor="middle">CloudStorage link</text>
 
         <!-- AI LAYER BOXES -->
         <!-- Hooks -->
-        <rect x="72" y="424" width="190" height="100" rx="8" fill="#162440" stroke="#EF4444" stroke-width="1.5"/>
-        <text x="167" y="448" fill="#F87171" font-size="13" font-weight="700" text-anchor="middle">Hooks (20)</text>
-        <text x="167" y="466" fill="#94A3B8" font-size="10" text-anchor="middle">Enforcement gates</text>
-        <text x="167" y="481" fill="#94A3B8" font-size="10" text-anchor="middle">PreToolUse · PostToolUse</text>
-        <text x="167" y="496" fill="#94A3B8" font-size="10" text-anchor="middle">SessionStart · SessionEnd</text>
-        <text x="167" y="511" fill="#94A3B8" font-size="10" text-anchor="middle">plan · no-guess · claim-evidence</text>
+        <rect x="72" y="564" width="190" height="100" rx="8" fill="#162440" stroke="#EF4444" stroke-width="1.5"/>
+        <text x="167" y="588" fill="#F87171" font-size="13" font-weight="700" text-anchor="middle">Hooks (45)</text>
+        <text x="167" y="606" fill="#94A3B8" font-size="10" text-anchor="middle">Enforcement gates</text>
+        <text x="167" y="621" fill="#94A3B8" font-size="10" text-anchor="middle">PreToolUse · PostToolUse</text>
+        <text x="167" y="636" fill="#94A3B8" font-size="10" text-anchor="middle">SessionStart · SessionEnd</text>
+        <text x="167" y="651" fill="#94A3B8" font-size="10" text-anchor="middle">plan · no-guess · claim-evidence</text>
 
         <!-- Agents -->
-        <rect x="282" y="424" width="190" height="100" rx="8" fill="#162440" stroke="#00A1DF" stroke-width="1.5"/>
-        <text x="377" y="448" fill="#38BDF8" font-size="13" font-weight="700" text-anchor="middle">Agents (5)</text>
-        <text x="377" y="466" fill="#94A3B8" font-size="10" text-anchor="middle">territory-data-scientist (Sonnet)</text>
-        <text x="377" y="481" fill="#94A3B8" font-size="10" text-anchor="middle">signal-scout (Haiku)</text>
-        <text x="377" y="496" fill="#94A3B8" font-size="10" text-anchor="middle">campaign-pm (Haiku)</text>
-        <text x="377" y="511" fill="#94A3B8" font-size="10" text-anchor="middle">territory-signal · healthcare-reviewer</text>
+        <rect x="282" y="564" width="190" height="100" rx="8" fill="#162440" stroke="#00A1DF" stroke-width="1.5"/>
+        <text x="377" y="588" fill="#38BDF8" font-size="13" font-weight="700" text-anchor="middle">Agents (5)</text>
+        <text x="377" y="606" fill="#94A3B8" font-size="10" text-anchor="middle">territory-data-scientist (Sonnet)</text>
+        <text x="377" y="621" fill="#94A3B8" font-size="10" text-anchor="middle">signal-scout (Haiku)</text>
+        <text x="377" y="636" fill="#94A3B8" font-size="10" text-anchor="middle">campaign-pm (Haiku)</text>
+        <text x="377" y="651" fill="#94A3B8" font-size="10" text-anchor="middle">territory-signal · healthcare-reviewer</text>
 
         <!-- Skills -->
-        <rect x="492" y="424" width="190" height="100" rx="8" fill="#162440" stroke="#8B5CF6" stroke-width="1.5"/>
-        <text x="587" y="448" fill="#A78BFA" font-size="13" font-weight="700" text-anchor="middle">Skills (1,384)</text>
-        <text x="587" y="466" fill="#94A3B8" font-size="10" text-anchor="middle">Cataloged · catalog.json</text>
-        <text x="587" y="481" fill="#94A3B8" font-size="10" text-anchor="middle">89 custom + plugin marketplaces</text>
-        <text x="587" y="496" fill="#94A3B8" font-size="10" text-anchor="middle">Filesystem-walked from SKILL.md</text>
-        <text x="587" y="511" fill="#94A3B8" font-size="10" text-anchor="middle">Top-3 injected at score ≥ 25</text>
+        <rect x="492" y="564" width="190" height="100" rx="8" fill="#162440" stroke="#8B5CF6" stroke-width="1.5"/>
+        <text x="587" y="588" fill="#A78BFA" font-size="13" font-weight="700" text-anchor="middle">Skills (1,384)</text>
+        <text x="587" y="606" fill="#94A3B8" font-size="10" text-anchor="middle">Cataloged · catalog.json</text>
+        <text x="587" y="621" fill="#94A3B8" font-size="10" text-anchor="middle">89 custom + plugin marketplaces</text>
+        <text x="587" y="636" fill="#94A3B8" font-size="10" text-anchor="middle">Filesystem-walked from SKILL.md</text>
+        <text x="587" y="651" fill="#94A3B8" font-size="10" text-anchor="middle">Top-3 injected at score ≥ 25</text>
 
         <!-- MCPs -->
-        <rect x="702" y="424" width="190" height="100" rx="8" fill="#162440" stroke="#10B981" stroke-width="1.5"/>
-        <text x="797" y="448" fill="#34D399" font-size="13" font-weight="700" text-anchor="middle">MCP Servers (16+)</text>
-        <text x="797" y="466" fill="#94A3B8" font-size="10" text-anchor="middle">Supabase ×2 · Slack · Apollo</text>
-        <text x="797" y="481" fill="#94A3B8" font-size="10" text-anchor="middle">ZoomInfo · NPI · CMS Coverage</text>
-        <text x="797" y="496" fill="#94A3B8" font-size="10" text-anchor="middle">MuleSoft · TraderMonty</text>
-        <text x="797" y="511" fill="#94A3B8" font-size="10" text-anchor="middle">Figma · Google Drive · Vercel</text>
+        <rect x="702" y="564" width="190" height="100" rx="8" fill="#162440" stroke="#10B981" stroke-width="1.5"/>
+        <text x="797" y="588" fill="#34D399" font-size="13" font-weight="700" text-anchor="middle">MCP Servers (16+)</text>
+        <text x="797" y="606" fill="#94A3B8" font-size="10" text-anchor="middle">Supabase ×2 · Slack · Apollo</text>
+        <text x="797" y="621" fill="#94A3B8" font-size="10" text-anchor="middle">ZoomInfo · NPI · CMS Coverage</text>
+        <text x="797" y="636" fill="#94A3B8" font-size="10" text-anchor="middle">MuleSoft · TraderMonty</text>
+        <text x="797" y="651" fill="#94A3B8" font-size="10" text-anchor="middle">Figma · Google Drive · Vercel</text>
 
         <!-- Memory -->
-        <rect x="912" y="424" width="255" height="100" rx="8" fill="#162440" stroke="#F59E0B" stroke-width="1.5"/>
-        <text x="1039" y="448" fill="#FCD34D" font-size="13" font-weight="700" text-anchor="middle">Memory System</text>
-        <text x="1039" y="466" fill="#94A3B8" font-size="10" text-anchor="middle">~/.claude/projects/ (file-based)</text>
-        <text x="1039" y="481" fill="#94A3B8" font-size="10" text-anchor="middle">MEMORY.md · 200-line auto-load</text>
-        <text x="1039" y="496" fill="#94A3B8" font-size="10" text-anchor="middle">Pipeline-F weekly self-learning</text>
-        <text x="1039" y="511" fill="#94A3B8" font-size="10" text-anchor="middle">Hindsight cross-session recall</text>
+        <rect x="912" y="564" width="255" height="100" rx="8" fill="#162440" stroke="#F59E0B" stroke-width="1.5"/>
+        <text x="1039" y="588" fill="#FCD34D" font-size="13" font-weight="700" text-anchor="middle">Memory System</text>
+        <text x="1039" y="606" fill="#94A3B8" font-size="10" text-anchor="middle">~/.claude/projects/ (file-based)</text>
+        <text x="1039" y="621" fill="#94A3B8" font-size="10" text-anchor="middle">MEMORY.md · 200-line auto-load</text>
+        <text x="1039" y="636" fill="#94A3B8" font-size="10" text-anchor="middle">Pipeline-F weekly self-learning</text>
+        <text x="1039" y="651" fill="#94A3B8" font-size="10" text-anchor="middle">Hindsight cross-session recall</text>
 
         <!-- Arrows: Compute → Data -->
         <line x1="172" y1="168" x2="192" y2="234" stroke="#10B981" stroke-width="1.5" marker-end="url(#arrow)"/>
@@ -1084,7 +1232,8 @@
     <p>All tables in the <code>cnplogkxbjecdeeritdl</code> project (us-west-2). Row counts are approximate; verify with <code>SELECT COUNT(*) FROM &lt;table&gt;</code> before querying large result sets.</p>
     <div class="alert" style="margin-bottom:16px;"><strong>v2 scope note:</strong> This inventory covers SmokinTerritory only. WD tables are documented in <code>~/.claude/references/whiskey-down-cluster.md</code>. <strong>smokin-ops</strong> schema is TBD as of 2026-04-26 — only the <code>kb</code> observability schema is partially seeded (<code>ingested_files</code> · <code>queries</code> · <code>citations</code>). Inaugural smokin-ops migration will go through the staging-branches gate.</div>
 
-    <h3>Core Account Data</h3>
+    <details open>
+    <summary>Core Account Data (3 tables)</summary>
     <table>
       <thead>
         <tr>
@@ -1127,8 +1276,10 @@
         </tr>
       </tbody>
     </table>
+    </details>
 
-    <h3>CMS Quality & Clinical Data</h3>
+    <details>
+    <summary>CMS Quality &amp; Clinical Data (6 tables)</summary>
     <table>
       <thead>
         <tr>
@@ -1177,8 +1328,10 @@
         </tr>
       </tbody>
     </table>
+    </details>
 
-    <h3>Signal & Territory Intelligence</h3>
+    <details>
+    <summary>Signal &amp; Territory Intelligence</summary>
     <table>
       <thead>
         <tr>
@@ -1203,8 +1356,10 @@
         </tr>
       </tbody>
     </table>
+    </details>
 
-    <h3>Deliverables & Engagement Tracking</h3>
+    <details>
+    <summary>Deliverables &amp; Engagement Tracking</summary>
     <table>
       <thead>
         <tr>
@@ -1265,6 +1420,7 @@
         </tr>
       </tbody>
     </table>
+    </details>
 
     <div class="alert">
       <strong>Account grouping canonical pattern:</strong> Always group by <code>COALESCE(canonical_account_id18, account_id18)</code> then by <code>ultimate_parent_duns</code>. Never group by bare <code>account_id18</code> alone or MIN/arbitrary ID selection. Source: <code>feedback_resolve_canonical_account_id_20260412.md</code>
@@ -1434,8 +1590,8 @@
     <h2><span class="num">6</span> AI Infrastructure</h2>
     <p>The Claude Code AI layer is built from four components: enforcement hooks that physically gate bad actions, specialist agents that handle parallel workloads, skills that encode deep domain knowledge, and MCP servers that connect to every external system.</p>
 
-    <h3 id="hooks">Enforcement Hooks (20) <span class="tag tag-green">v3.1 corrected</span></h3>
-    <p>Hooks run at <code>PreToolUse</code>, <code>PostToolUse</code>, <code>SessionStart</code>, <code>SessionEnd</code>, and <code>UserPromptSubmit</code>. They block patterns — not just advise against them. Registered in <code>~/.claude/settings.json</code>. Deployed via <code>make install</code> from <code>~/repos/claude-config/</code>. <span class="tag tag-green">v3.1: live count = 20 (verified from disk 2026-05-08)</span></p>
+    <h3 id="hooks">Enforcement Hooks (45) <span class="tag tag-green">v3.4 corrected</span></h3>
+    <p>Hooks run at <code>PreToolUse</code>, <code>PostToolUse</code>, <code>SessionStart</code>, <code>SessionEnd</code>, and <code>UserPromptSubmit</code>. They block patterns — not just advise against them. Registered in <code>~/.claude/settings.json</code>. Deployed via <code>make install</code> from <code>~/repos/claude-config/</code>. <span class="tag tag-green">v3.4: live count = 45 (verified from disk 2026-05-22)</span></p>
 
     <div class="hook-list">
       <div class="hook-item">
@@ -1571,6 +1727,19 @@
       <span class="tag tag-gray">hc-* (6 healthcare API patterns)</span>
     </div>
     <p style="margin-top:8px;font-size:12px;color:var(--muted);">CLI: <code>python ~/repos/claude-config/bin/skill-find "task description"</code> for human-driven matching.</p>
+
+    <h3 id="orchestrator">smokin-orchestrator <span class="tag tag-green">Experimental · 2026-05-22</span></h3>
+    <div class="card" style="margin-bottom:16px;">
+      <p><strong>What it is:</strong> Multi-agent evaluation harness that proved the 4-subagent topology (c_four_plus) produces higher-quality account intelligence briefs than single-agent or 3-agent alternatives.</p>
+      <p style="margin-top:8px;"><strong>What it proved:</strong> c_four_plus composite score 4.05 vs b_three 3.40 vs a_phased 2.90 across 15 artifacts × 4 dimensions. Michael blind spot-check confirmed 2026-05-22. 38% quality improvement over single-agent.</p>
+      <p style="margin-top:8px;"><strong>Brief format standard (durable output):</strong> employees + revenue, HQ, 1-2 external pressures, integration problems (bullets), 1-2 hooks. Accuracy and brevity are the only two evaluation criteria.</p>
+      <p style="margin-top:8px;"><strong>Runner architectures:</strong> a_phased (single), b_three (3 subagents), c_four_plus (4 subagents — winner). Invoke: <code>"run the orchestrator on [account name]"</code>. Next: "build d_four_plus runner".</p>
+    </div>
+
+    <h3>PM Phase 2 Model Routing <span class="tag tag-green">PR #75 · 2026-05-22</span></h3>
+    <div class="card" style="margin-bottom:16px;">
+      <p>Haiku for read-only/narrow agents (Explore, verifiers, narrow general-purpose). Sonnet for reasoning and architecture. Opus for plan-mode entry. Dispatch via Agent tool with explicit <code>model:</code> param. Reduces cost 60-75% on high-volume agent tasks.</p>
+    </div>
 
     <h3 id="mcps">MCP Servers (16+)</h3>
     <div class="mcp-grid">
@@ -1815,14 +1984,31 @@
   </section>
 
   <div style="padding: 32px 0 48px; border-top: 1px solid var(--border); margin-top: 16px;">
-    <p style="font-size:12px;">Generated 2026-05-09 · Internal reference · SmokinTerritory Architecture <strong>v3.3</strong> · part of <strong style="color:var(--green);">Smokin Stack v1.0</strong> · supersedes v3.2 · adds umbrella name to header + Section 0 thesis · No engagement beacon (internal use only)</p>
+    <p style="font-size:12px;">Generated 2026-05-22 · Internal reference · SmokinTerritory Architecture <strong>v3.4</strong> · part of <strong style="color:var(--green);">Smokin Stack v1.0</strong> · supersedes v3.3 · adds Governance layer + App Portfolio + hook count 20→45 · No engagement beacon (internal use only)</p>
     <p style="font-size:11px;color:var(--muted);margin-top:6px;">Source: live <code>~/.claude/agents/</code> · <code>~/.claude/hooks/</code> · <code>~/.claude/settings.json</code> · MEMORY.md milestones · CLAUDE.md routing tables · Convergence Plan (deliverables.id=317) · pgvector gate state (deliverables.id=319, verdict NO-GO, closed 2026-05-06) · TP v2 overview (note_to_claude_thinking_partner_v2_overview_20260503.md) · PM Phase 1 (build.deliverables.id=28cc8251) · SD telemetry (build.deliverables.id=79215339).</p>
   </div>
 
 </main>
 
 <script>
-  // Highlight active nav item on scroll
+  // Load-time: restore section from ?section= query param (FIX-H2)
+  document.addEventListener('DOMContentLoaded', () => {
+    const targetId = new URLSearchParams(location.search).get('section');
+    if (targetId) {
+      const el = document.getElementById(targetId);
+      if (el) el.scrollIntoView({ behavior: 'smooth' });
+    }
+  });
+
+  // Reading progress bar
+  const progressBar = document.getElementById('reading-progress');
+  window.addEventListener('scroll', () => {
+    const scrollTop = document.documentElement.scrollTop;
+    const scrollHeight = document.documentElement.scrollHeight - document.documentElement.clientHeight;
+    progressBar.style.transform = `scaleX(${scrollHeight > 0 ? scrollTop / scrollHeight : 0})`;
+  });
+
+  // Nav highlight on scroll + write ?section= to URL (query-string routing, no scroll-jump)
   const sections = document.querySelectorAll('section[id]');
   const navLinks = document.querySelectorAll('nav a');
 
@@ -1835,6 +2021,7 @@
             link.classList.add('active');
           }
         });
+        history.replaceState(null, '', '?section=' + entry.target.id);
       }
     });
   }, { threshold: 0.2 });
