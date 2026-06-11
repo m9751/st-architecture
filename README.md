@@ -4,7 +4,7 @@
 
 Live at: https://m9751.github.io/st-architecture/
 
-**Current version:** v3.4 (Governance layer, App Portfolio, 45 hooks)
+**Current version:** v3.4.1 (auto-audit: hooks 72, skills 1,449, accounts 867, contacts 3,350)
 
 ## What lives here
 
@@ -47,6 +47,15 @@ Live at: https://m9751.github.io/st-architecture/
 ## Gaps (Hard Rule #1 — github-repo-foundations)
 
 - [ ] `LICENSE` missing
-- [ ] `.gitignore` missing
 
-_Last updated: 2026-06-04 — v3.4_
+## How to run the audit
+
+```bash
+python audit.py --dry-run   # see what would change
+python audit.py             # patch + commit
+python audit.py --minor     # bump minor version (v3.4 -> v3.5)
+```
+
+Requires `SUPABASE_URL` and `SUPABASE_KEY` env vars for Supabase counts. Local counts (hooks, skills) work without them.
+
+_Last updated: 2026-06-11 — v3.4.1_
